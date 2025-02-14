@@ -22,5 +22,5 @@ body {
     width: 100%; 
     max-width: 500px; 
     height: auto; 
-    transition: opacity 0.5s ease-in-out; /* ✨ This enables fade effect */
+    transition: opacity 0.8s ease-in-out; /* ✨ This enables fade effect */
 }
