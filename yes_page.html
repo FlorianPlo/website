@@ -13,5 +13,35 @@
             <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMmo3c3l5ODh3ZGN6NHhhaDE2Mjg1ZjkwOXczdDFxbWM3dTBtaW9zaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/9XY4f3FgFTT4QlaYqa/giphy.gif">
         </div>
     </div>
+    <script>
+        const mediaList = [
+            "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.istockphoto.com%2Fde%2Ffotos%2Fliebe&psig=AOvVaw0xnzdr-PzjrWqNkM6OMNI-&ust=1739597025219000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCLC37Ye2wosDFQAAAAAdAAAAABAJ",
+            "https://media.istockphoto.com/id/636379014/de/foto/hände-bilden-ein-herzform-mit-sonnenuntergang-silhouette.jpg?s=612x612&w=0&k=20&c=C0xCzbVjkTt0uyF8ZjG5DpBq4RqOEVW-jnsryWG7Ks4=", // Image
+            "https://media.giphy.com/media/3ohs4BSacFKI7A717y/giphy.gif",
+            "https://www.w3.org/html/logo/downloads/HTML5_Logo_256.png", // Another Image
+            "https://media.giphy.com/media/26AHONQ79FdWZhAI0/giphy.gif",
+            "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg" // Cat Image
+        ];
+
+        let currentIndex = 0;
+
+        function changeMedia() {
+            const imgElement = document.getElementById("media");
+            
+            // Fade out
+            imgElement.style.opacity = "0";
+
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % mediaList.length;
+                imgElement.src = mediaList[currentIndex];
+
+                // Fade back in
+                imgElement.style.opacity = "1";
+            }, 500); // Change media after fade out
+        }
+
+        // Change every 2 seconds
+        setInterval(changeMedia, 2000);
+    </script>
 </body>
 </html>
