@@ -49,7 +49,7 @@ const segments = [
   {
     text: "",
     emoji: "🛏️",
-    type: "overlay"
+    type: "overlay",
     overlay: { emoji: "🛏️", title: "Schlaf wundervoll und träum süaß 🥰" }
   },
   {
