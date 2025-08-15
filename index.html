@@ -1,22 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nachricht für Angie</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Klick den Keks 🍪</title>
+  <meta name="description" content="Ein kleines, liebevolles Klick-Spiel zum Lächeln." />
+  <link rel="icon" href="data:image/svg+xml;utf8,
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+      <text y='.9em' font-size='90'>🍪</text>
+    </svg>">
+  <link rel="preload" as="style" href="styles.css" />
+  <link rel="preload" as="script" href="script.js" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>Willst du mit mir Valentinstag verbringen?</h1>
-        <div class="buttons">
-            <button class="yes-button" onclick="handleYesClick()">Jo</button>
-            <button class="no-button" onclick="handleNoClick()">Na</button>
+  <main class="app" aria-live="polite">
+    <header class="top">
+      <h1>🍪 Klick den Keks</h1>
+      <p class="subtitle">Einmal tippen = einmal lächeln.</p>
+    </header>
+
+    <section class="panel">
+      <div class="stats">
+        <div class="stat">
+          <span class="label">Klicks</span>
+          <span id="score" class="value">0</span>
         </div>
-        <div class="gif_container">
-            <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbW5lenZyZHI5OXM2eW95b3pmMG40cWVrMDhtNjVuM3A4dGNxa2g2dSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/VM1fcpu2bKs1e2Kdbj/giphy.gif" alt="Cute GIF">
+        <div class="stat">
+          <span class="label">Heute</span>
+          <span id="today" class="value">0</span>
         </div>
-    </div>
-    <script src="script.js"></script>
+      </div>
+
+      <button id="cookieBtn" class="cookie" aria-label="Keks anklicken">
+        <!-- Inline-SVG (kein externes Asset nötig) -->
+        <svg viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+          <!-- Keks-Grundform -->
+          <defs>
+            <radialGradient id="g" cx="40%" cy="35%" r="70%">
+              <stop offset="0%" stop-color="#f5c37a"/>
+              <stop offset="60%" stop-color="#e2a85a"/>
+              <stop offset="100%" stop-color="#c7893e"/>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="86" fill="url(#g)" />
+          <!-- Biss -->
+          <circle cx="165" cy="65" r="24" fill="white"/>
+          <circle cx="150" cy="40" r="12" fill="white"/>
+          <circle cx="180" cy="90" r="12" fill="white"/>
+          <!-- Schokostückchen -->
+          <g fill="#4b2e19">
+            <circle cx="70" cy="70" r="7"/>
+            <circle cx="120" cy="60" r="6"/>
+            <circle cx="85" cy="105" r="6"/>
+            <circle cx="120" cy="120" r="7"/>
+            <circle cx="60" cy="125" r="6"/>
+            <circle cx="95" cy="150" r="5"/>
+          </g>
+        </svg>
+        <span class="cta">Tippen!</span>
+      </button>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <div class="actions">
+        <button id="spinBtn" class="secondary" aria-label="Zufallsbotschaft anzeigen">
+          🎡 Glücksrad
+        </button>
+        <button id="revealBtn" class="secondary" aria-label="Überraschung anzeigen">
+          💌 Überraschung
+        </button>
+        <button id="resetBtn" class="linklike" aria-label="Fortschritt zurücksetzen">
+          Zurücksetzen
+        </button>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <small>
+        Tipp: Funktioniert auch offline. Animationen werden bei „Bewegung reduzieren“ automatisch sanfter. ❤️
+      </small>
+    </footer>
+  </main>
+
+  <!-- Konfetti-Container -->
+  <div id="confetti" class="confetti" aria-hidden="true"></div>
+
+  <script src="script.js" defer></script>
 </body>
 </html>
