@@ -9,7 +9,7 @@
 
 const segments = [
   {
-    text: "Picture Time 📷",
+    text: "",
     emoji: "📷",
     type: "randomImageOverlay",
     pattern: "img/{n}.jpeg",
