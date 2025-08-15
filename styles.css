@@ -1,51 +1,144 @@
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background-color: #f9e3e3;
-    font-family: 'Arial', sans-serif;
-    flex-direction: column;
-  }
-  
-  .container {
-    text-align: center;
-  }
-  
-  h1 {
-    font-size: 2.5em;
-    color: #d32f2f;
-  }
-  
-  .buttons {
-    margin-top: 20px;
-  }
-  
-  .yes-button {
-    font-size: 1.5em;
-    padding: 10px 20px;
-    margin-right: 10px;
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .no-button {
-    font-size: 1.5em;
-    padding: 10px 20px;
-    background-color: #f44336;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .gif_container img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-    margin-top: 20px;
-  }
+:root{
+  --bg: linear-gradient(135deg,#ffe7f0, #fff7e2);
+  --card: #ffffff;
+  --ink: #2a2a2a;
+  --muted:#6e6e6e;
+  --brand:#ff7aa2;
+  --accent:#ffb703;
+  --ring: rgba(255,122,162,.45);
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --radius: 16px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji", sans-serif;
+  color:var(--ink);
+  background:var(--bg) fixed;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+.app{
+  min-height:100%;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:24px;
+  padding:24px;
+}
+
+.top{
+  text-align:center;
+  margin-top:8px;
+}
+h1{
+  margin:0 0 4px;
+  font-size: clamp(1.4rem, 1.1rem + 2vw, 2rem);
+}
+.subtitle{
+  margin:0;
+  color:var(--muted);
+}
+
+.panel{
+  max-width:560px;
+  margin:0 auto;
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+}
+
+.stats{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+.stat{
+  flex:1;
+  background:#fff6;
+  border:1px solid #0001;
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.label{color:var(--muted);font-size:.9rem}
+.value{font-weight:700}
+
+.cookie{
+  appearance:none;border:0;background:#fff;
+  width:min(80vw, 280px); aspect-ratio:1/1;
+  border-radius:50%;
+  margin:18px auto 6px; display:grid; place-items:center; gap:6px;
+  cursor:pointer; position:relative; overflow:visible;
+  transition: transform .15s ease, filter .2s ease;
+  box-shadow: 0 10px 20px rgba(0,0,0,.07), inset 0 0 0 1px #00000010;
+}
+.cookie:focus-visible{
+  outline: 3px solid var(--ring);
+  outline-offset: 4px;
+}
+.cookie:active{ transform: scale(.98) }
+.cookie svg{ width:75%; height:auto; display:block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
+.cookie .cta{
+  position:absolute; bottom:-10px; font-weight:700; color:#8a5b2f; background:#fff2; padding:.1rem .5rem; border-radius:999px; font-size:.9rem;
+}
+
+.message{
+  min-height:3.25rem;
+  text-align:center;
+  font-size: clamp(1rem, .8rem + 1.2vw, 1.25rem);
+  font-weight:600;
+  padding:8px 10px; margin-top:12px;
+}
+.message .pill{
+  display:inline-block; padding:.35rem .7rem; border-radius:999px;
+  background: #fff3;
+  border:1px solid #0001;
+}
+
+.actions{
+  display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;
+}
+.secondary{
+  appearance:none; border:0; cursor:pointer;
+  padding:.7rem 1rem; border-radius:12px; background:#fff;
+  box-shadow:var(--shadow);
+  transition:transform .1s ease, box-shadow .2s ease;
+}
+.secondary:active{ transform:scale(.98) }
+.linklike{
+  appearance:none;border:0;background:none;color:var(--muted);
+  text-decoration:underline; cursor:pointer; padding:.5rem;
+}
+
+.foot{ text-align:center; color:var(--muted) }
+
+/* Konfetti-Herzen */
+.confetti{ position: fixed; inset:0; pointer-events:none; overflow:hidden; }
+.heart{
+  position:absolute; width:16px; height:16px; transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+  animation: fall var(--dur,2200ms) ease-in forwards, spin var(--rotDur,1400ms) linear infinite;
+  opacity:.95;
+}
+.heart::before, .heart::after{
+  content:""; position:absolute; width:50%; height:80%;
+  background: var(--color, #ff7aa2); border-radius:50% 50% 0 0;
+}
+.heart::before{ left:0; transform: rotate(-45deg) translate(-6%, 18%); transform-origin:100% 100%;}
+.heart::after{ right:0; transform: rotate(45deg) translate(6%, 18%); transform-origin:0 100%;}
+@keyframes fall{
+  to{ transform: translate(var(--xEnd, 40vw), var(--yEnd, 100vh)) scale(1) rotate(30deg); opacity:0; }
+}
+@keyframes spin{
+  to{ rotate: 360deg; }
+}
+
+/* sanfter für reduzierte Bewegung */
+@media (prefers-reduced-motion: reduce){
+  .cookie, .secondary{ transition:none }
+  .heart{ animation: fall var(--dur,2000ms) linear forwards; }
+}
