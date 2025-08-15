@@ -1,12 +1,12 @@
 // ===== Segmente definieren =====
-// Neue Optionen gemäß deinem Wunsch:
-// 1) 📷 Picture Time: zeigt zufällig ein Bild aus img/1.jpeg ... img/8.jpeg
-// 2) ❤️ Herz: kleine Liebesnachricht + Herzfunken (wie Freudentanz) + Overlay
-// 3) 🚕 Taxi: Nachricht „Fast daheim – bleib sicher <3“
-// 4) 🎬 Film: spielt Video img/video.mp4 im Overlay (autoplay, muted, playsinline)
-// 5) 🧸 Spielzeug: zeigt img/lego.jpeg
-// 6–8) Meine Ideen: 😘 Kusspause (Overlay), 💧 Wasser trinken (Message), 💃 Mini-Tanzparty (Herzfunken)
-
+// 1) 📷 Picture Time -> zufälliges Bild aus img/1.jpeg ... img/8.jpeg
+// 2) ❤️ Liebesnachricht + Herzfunken + Overlay
+// 3) 🚕 Fast daheim – bleib sicher <3
+// 4) 🎬 Video: img/video.mp4
+// 5) 🧸 Bild: img/lego.png (achte auf die Endung in deinem Ordner!)
+// 6) 😘 Kusspause
+// 7) 🛏️ Gute Nacht
+// 8) 💃 Herzfunken-Party
 const segments = [
   {
     text: "",
@@ -26,7 +26,7 @@ const segments = [
     text: "",
     emoji: "🚕",
     type: "overlay",
-    overlay: { emoji: "🚕", title: "Fast daheim – blib sicher <3" }
+    overlay: { emoji: "🚕", title: "Fast daheim – bleib sicher <3" } // 'bleib' statt 'blib'
   },
   {
     text: "",
@@ -49,8 +49,8 @@ const segments = [
   {
     text: "",
     emoji: "🛏️",
-    type: "overlay",
-    overlay: { emoji: "🛏️", title: "Schlaf wundervoll und träum süaß 🥰" }
+    type: "overlay", // <- hier fehlte das Komma!
+    overlay: { emoji: "🛏️", title: "Schlaf wundervoll und träum süß 🥰" }
   },
   {
     text: "",
@@ -159,23 +159,28 @@ function drawWheel(){
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Label (Emoji + kurzer Text)
+    // Label (Emoji + optional kurzer Text)
     ctx.save();
     const mid = start + segAngle/2;
     const labelR = r*0.62;
     ctx.translate(Math.cos(mid)*labelR, Math.sin(mid)*labelR);
     ctx.rotate(mid + Math.PI/2);
 
+    // Emoji
     ctx.font = `bold ${Math.max(20, r*0.1)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji", system-ui`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#333";
     ctx.fillText(segments[i].emoji, 0, -2);
 
-    ctx.font = `500 ${Math.max(10, r*0.045)}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-    const short = segments[i].text.replace(/(.{24}).*/, "$1…");
-    ctx.fillStyle = "#4b4b4b";
-    ctx.fillText(short, 0, Math.max(12, r*0.09));
+    // KEIN Text zeichnen, wenn text leer ist
+    const full = (segments[i].text || "").trim();
+    if(full){
+      ctx.font = `500 ${Math.max(10, r*0.045)}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+      const short = full.length > 24 ? (full.slice(0,24) + "…") : full;
+      ctx.fillStyle = "#4b4b4b";
+      ctx.fillText(short, 0, Math.max(12, r*0.09));
+    }
     ctx.restore();
   }
 
@@ -247,22 +252,26 @@ async function spin(){
 // ===== Ergebnis & Aktionen =====
 function showResult(idx){
   const item = segments[idx];
-  resultText.textContent = item.text;
+
+  // Ergebniszeile unten: wenn text leer -> overlay.title -> emoji
+  const display = (item.text && item.text.trim())
+                || (item.overlay && item.overlay.title)
+                || item.emoji
+                || "";
+  resultText.textContent = display;
 
   if(item.type === "randomImageOverlay"){
-    // zufällige Nummer einsetzen
     const n = secureRandInt(1, item.count || 1);
     const src = (item.pattern || "img/{n}.jpeg").replace("{n}", n);
-    openOverlay({ ...item.overlay, imageSrc: src });
+    openOverlay({ ...(item.overlay||{}), imageSrc: src });
   } else if(item.type === "overlayHearts"){
     openOverlay(item.overlay || {});
-    heartBurst(); // zusätzlich Konfetti wie gewünscht
+    heartBurst(); // zusätzlicher Funkenregen
   } else if(item.type === "overlay"){
     openOverlay(item.overlay || {});
   } else if(item.type === "hearts"){
     heartBurst();
   } else {
-    // message (nur Text) – kleine Dosis Konfetti
     heartBurst(12);
   }
 }
