@@ -9,18 +9,29 @@
   --accent: #ff6b9e;
 }
 
-/* Background */
+/* Mobile Defaults & iOS Tweaks */
 html, body { height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
+* { -webkit-tap-highlight-color: transparent; }
+
 body{
   margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
              "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji";
   color: var(--text);
-  min-height:100svh; display:flex; align-items:center; justify-content:center;
+
+  /* Sichere Höhe auf iOS: zuerst 100dvh (moderne Geräte), Fallback svh */
+  min-height: 100dvh;
+  /* Fallback für ältere iOS: */
+  min-height: 100svh;
+
+  display:flex; align-items:center; justify-content:center;
   background: radial-gradient(1200px 1200px at 20% 10%, var(--bg1), transparent 60%),
               radial-gradient(1000px 1000px at 80% 0%, var(--bg2), transparent 55%),
               radial-gradient(1200px 900px at 50% 100%, var(--bg3), transparent 60%),
               linear-gradient(135deg, #fefcff, #f5fbff 55%, #fafff7);
   overflow:hidden;
+  overscroll-behavior: none;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 body::before{
@@ -44,7 +55,7 @@ body::before{
 @keyframes rise{ from{ transform: translateY(8svh) scale(.9); opacity:.0 } to{ transform: translateY(-100svh) scale(1.1); opacity:.35 } }
 
 /* App card */
-.app{ position:relative; z-index:1; width: min(94vw, 720px); }
+.app{ position:relative; z-index:1; width: min(94vw, 720px); padding: env(safe-area-inset-top) env(safe-area-inset-left) env(safe-area-inset-bottom) env(safe-area-inset-right); }
 .card{
   background: var(--card);
   backdrop-filter: blur(8px);
@@ -57,7 +68,12 @@ body::before{
 
 /* Wheel */
 .wheel-wrap{ position:relative; margin-inline:auto; width: var(--size); height: var(--size); }
-.wheel{ width:100%; height:100%; border-radius:50%; overflow:visible; display:block; }
+.wheel{
+  width:100%; height:100%; border-radius:50%; overflow:visible; display:block;
+  /* iOS: bessere Transform-Performance */
+  transform: translateZ(0);
+  will-change: transform;
+}
 
 /* Pointer */
 .pointer{
@@ -70,12 +86,12 @@ body::before{
 /* Controls */
 .controls{ display:flex; gap:12px; justify-content:center; margin-top: clamp(12px, 2.6vmin, 18px); flex-wrap:wrap; }
 .btn{
-  -webkit-tap-highlight-color: transparent;
   appearance:none; border:none; cursor:pointer; font-weight:700; letter-spacing:.2px;
   padding: .9em 1.2em; border-radius: 16px; min-width: 140px;
   background: linear-gradient(135deg, #ff93b9, #ff6b9e);
   color:white; box-shadow: 0 8px 16px rgba(255, 107, 158, .35);
   transition: transform .12s ease, box-shadow .12s ease, filter .2s ease;
+  touch-action: manipulation;
 }
 .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 18px rgba(255, 107, 158, .42); }
 .btn:active{ transform: translateY(1px); }
