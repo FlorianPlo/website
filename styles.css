@@ -18,12 +18,8 @@ body{
   margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
              "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji";
   color: var(--text);
-
-  /* Sichere Höhe auf iOS: zuerst 100dvh (moderne Geräte), Fallback svh */
   min-height: 100dvh;
-  /* Fallback für ältere iOS: */
   min-height: 100svh;
-
   display:flex; align-items:center; justify-content:center;
   background: radial-gradient(1200px 1200px at 20% 10%, var(--bg1), transparent 60%),
               radial-gradient(1000px 1000px at 80% 0%, var(--bg2), transparent 55%),
@@ -70,7 +66,6 @@ body::before{
 .wheel-wrap{ position:relative; margin-inline:auto; width: var(--size); height: var(--size); }
 .wheel{
   width:100%; height:100%; border-radius:50%; overflow:visible; display:block;
-  /* iOS: bessere Transform-Performance */
   transform: translateZ(0);
   will-change: transform;
 }
