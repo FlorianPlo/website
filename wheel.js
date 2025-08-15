@@ -1,18 +1,67 @@
 // ===== Segmente definieren =====
+// Neue Optionen gemäß deinem Wunsch:
+// 1) 📷 Picture Time: zeigt zufällig ein Bild aus img/1.jpeg ... img/8.jpeg
+// 2) ❤️ Herz: kleine Liebesnachricht + Herzfunken (wie Freudentanz) + Overlay
+// 3) 🚕 Taxi: Nachricht „Fast daheim – bleib sicher <3“
+// 4) 🎬 Film: spielt Video img/video.mp4 im Overlay (autoplay, muted, playsinline)
+// 5) 🧸 Spielzeug: zeigt img/lego.jpeg
+// 6–8) Meine Ideen: 😘 Kusspause (Overlay), 💧 Wasser trinken (Message), 💃 Mini-Tanzparty (Herzfunken)
+
 const segments = [
-  { text: "Ich hab dich lieb ❤️", emoji: "❤️", type: "hearts" },
-  { text: "Kusspause! 😘", emoji: "😘", type: "overlay", overlay: { emoji: "😘", title: "Kusspause! 😘" } },
-  { text: "Fast daheim 🚋", emoji: "🚋", type: "overlay", overlay: { emoji: "🚋", title: "Fast daheim 🚋", imageSrc: "assets/hearts.svg" } },
-  { text: "Zeit für einen Keks 🍪", emoji: "🍪", type: "overlay", overlay: { emoji: "🍪", title: "Zeit für einen Keks 🍪", imageSrc: "assets/cookie.svg" } },
-  { text: "Kuschelalarm 🐻", emoji: "🐻", type: "overlay", overlay: { emoji: "🐻", title: "Kuschelalarm 🐻" } },
-  { text: "Freudentanz! 💃", emoji: "💃", type: "hearts" },
-  { text: "Selfie-Time 🤳", emoji: "🤳", type: "message" },
-  { text: "Wasser trinken! 💧", emoji: "💧", type: "message" },
+  {
+    text: "Picture Time 📷",
+    emoji: "📷",
+    type: "randomImageOverlay",
+    pattern: "img/{n}.jpeg",
+    count: 8,
+    overlay: { title: "Picture Time 📷" }
+  },
+  {
+    text: "Ich liebe dich ❤️",
+    emoji: "❤️",
+    type: "overlayHearts",
+    overlay: { emoji: "❤️", title: "Ich liebe dich ❤️" }
+  },
+  {
+    text: "Fast daheim – bleib sicher <3",
+    emoji: "🚕",
+    type: "overlay",
+    overlay: { emoji: "🚕", title: "Fast daheim – bleib sicher <3" }
+  },
+  {
+    text: "Filmzeit 🎬",
+    emoji: "🎬",
+    type: "overlay",
+    overlay: { title: "Filmzeit 🎬", videoSrc: "img/video.mp4" }
+  },
+  {
+    text: "Spielzeugzeit 🧸",
+    emoji: "🧸",
+    type: "overlay",
+    overlay: { title: "LEGO!", imageSrc: "img/lego.jpeg" }
+  },
+  {
+    text: "Kusspause! 😘",
+    emoji: "😘",
+    type: "overlay",
+    overlay: { emoji: "😘", title: "Kusspause! 😘" }
+  },
+  {
+    text: "Wasser trinken! 💧",
+    emoji: "💧",
+    type: "message"
+  },
+  {
+    text: "Mini-Tanzparty 💃",
+    emoji: "💃",
+    type: "hearts"
+  },
 ];
 
 // Pastellige Segmentfarben
 const colors = [
-  "#ffd6e7", "#d4f1ff", "#e9ffd6", "#fff3c9", "#e5d6ff", "#d6fff7", "#ffd6f1", "#d6f9ff"
+  "#ffd6e7", "#d4f1ff", "#e9ffd6", "#fff3c9",
+  "#e5d6ff", "#d6fff7", "#ffd6f1", "#d6f9ff"
 ];
 
 // ===== Canvas & DOM =====
@@ -64,7 +113,7 @@ function waitTransition(el, ms){
     const onEnd = () => clean();
     el.addEventListener("transitionend", onEnd, true);
     el.addEventListener("webkitTransitionEnd", onEnd, true);
-    setTimeout(clean, ms + 80); // kleiner Puffer
+    setTimeout(clean, ms + 80);
   });
 }
 
@@ -176,21 +225,13 @@ async function spin(){
   const delta = spins*360 + delta0;
   const total = rotation + delta;
 
-  // 6) iOS-sicher animieren: Reflow + Doppel-rAF + Fallback-Timer
+  // 6) iOS-sicher animieren
   canvas.style.willChange = "transform";
-  // Force Reflow
   void canvas.getBoundingClientRect();
-
   await new Promise(r => requestAnimationFrame(() => {
     canvas.style.transition = "transform 4.2s cubic-bezier(.12,.65,.07,1)";
-    // noch ein rAF, damit Transition sicher „armt“
-    requestAnimationFrame(() => {
-      canvas.style.transform = `rotate(${total}deg)`;
-      r();
-    });
+    requestAnimationFrame(() => { canvas.style.transform = `rotate(${total}deg)`; r(); });
   }));
-
-  // Warten, egal ob 'transitionend' feuert
   await waitTransition(canvas, 4200);
 
   rotation = total; // finaler Winkel
@@ -199,8 +240,6 @@ async function spin(){
   spinning = false;
   spinBtn.disabled = false;
   againBtn.style.display = "inline-block";
-
-  // Transition zurücksetzen (ohne Sprung)
   requestAnimationFrame(() => { canvas.style.transition = "transform 0s linear"; });
 }
 
@@ -209,12 +248,20 @@ function showResult(idx){
   const item = segments[idx];
   resultText.textContent = item.text;
 
-  if(item.type === "overlay"){
-    const o = item.overlay || {};
-    openOverlay(o);
+  if(item.type === "randomImageOverlay"){
+    // zufällige Nummer einsetzen
+    const n = secureRandInt(1, item.count || 1);
+    const src = (item.pattern || "img/{n}.jpeg").replace("{n}", n);
+    openOverlay({ ...item.overlay, imageSrc: src });
+  } else if(item.type === "overlayHearts"){
+    openOverlay(item.overlay || {});
+    heartBurst(); // zusätzlich Konfetti wie gewünscht
+  } else if(item.type === "overlay"){
+    openOverlay(item.overlay || {});
   } else if(item.type === "hearts"){
     heartBurst();
   } else {
+    // message (nur Text) – kleine Dosis Konfetti
     heartBurst(12);
   }
 }
@@ -223,7 +270,6 @@ function showResult(idx){
 function openOverlay({emoji, title, imageSrc, videoSrc, poster} = {}){
   overlayEmoji.style.display = emoji ? "block" : "none";
   overlayEmoji.textContent = emoji || "";
-
   overlayTitle.textContent = title || "";
 
   overlayMedia.innerHTML = "";
@@ -241,6 +287,8 @@ function openOverlay({emoji, title, imageSrc, videoSrc, poster} = {}){
     if(poster) vid.poster = poster;
     vid.controls = true;
     vid.autoplay = true;
+    vid.muted = true;         // iOS Autoplay-Sicherheit
+    vid.playsInline = true;   // iOS: nicht in Vollbild springen
     overlayMedia.appendChild(vid);
     overlayMedia.setAttribute("aria-hidden", "false");
   }
@@ -305,7 +353,3 @@ document.addEventListener("keydown", (e) => {
 // Init
 setupCanvasSize();
 spawnBackgroundHearts();
-
-// ===== Hinweise =====
-// • iOS Safari Fixes: doppeltes rAF + Fallback-Timer, transform:translateZ(0), viewport-fit=cover.
-// • Ergebnisanzeige bleibt exakt, da der gewählte Index (chosenIndex) verwendet wird.
