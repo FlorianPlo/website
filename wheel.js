@@ -17,42 +17,43 @@ const segments = [
     overlay: { title: "Picture Time 📷" }
   },
   {
-    text: "Ich liebe dich ❤️",
+    text: "",
     emoji: "❤️",
     type: "overlayHearts",
-    overlay: { emoji: "❤️", title: "Ich liebe dich ❤️" }
+    overlay: { emoji: "❤️", title: "I lieb di 🥰❤️" }
   },
   {
-    text: "Fast daheim – bleib sicher <3",
+    text: "",
     emoji: "🚕",
     type: "overlay",
-    overlay: { emoji: "🚕", title: "Fast daheim – bleib sicher <3" }
+    overlay: { emoji: "🚕", title: "Fast daheim – blib sicher <3" }
   },
   {
-    text: "Filmzeit 🎬",
+    text: "",
     emoji: "🎬",
     type: "overlay",
     overlay: { title: "Filmzeit 🎬", videoSrc: "img/video.mp4" }
   },
   {
-    text: "Spielzeugzeit 🧸",
+    text: "",
     emoji: "🧸",
     type: "overlay",
     overlay: { title: "LEGO!", imageSrc: "img/lego.png" }
   },
   {
-    text: "Kusspause! 😘",
+    text: "",
     emoji: "😘",
     type: "overlay",
     overlay: { emoji: "😘", title: "Kusspause! 😘" }
   },
   {
-    text: "Wasser trinken! 💧",
-    emoji: "💧",
-    type: "message"
+    text: "",
+    emoji: "🛏️",
+    type: "overlay"
+    overlay: { emoji: "🛏️", title: "Schlaf wundervoll und träum süaß 🥰" }
   },
   {
-    text: "Mini-Tanzparty 💃",
+    text: "",
     emoji: "💃",
     type: "hearts"
   },
