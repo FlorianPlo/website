@@ -1,6 +1,4 @@
 // ===== Segmente definieren =====
-// Jede Aktion kann 'emoji' anzeigen, optional 'overlay' mit { emoji, title, imageSrc, videoSrc, poster }
-// 'type' steuert, was passiert: 'overlay', 'hearts', 'message'
 const segments = [
   { text: "Ich hab dich lieb ❤️", emoji: "❤️", type: "hearts" },
   { text: "Kusspause! 😘", emoji: "😘", type: "overlay", overlay: { emoji: "😘", title: "Kusspause! 😘" } },
@@ -8,7 +6,7 @@ const segments = [
   { text: "Zeit für einen Keks 🍪", emoji: "🍪", type: "overlay", overlay: { emoji: "🍪", title: "Zeit für einen Keks 🍪", imageSrc: "assets/cookie.svg" } },
   { text: "Kuschelalarm 🐻", emoji: "🐻", type: "overlay", overlay: { emoji: "🐻", title: "Kuschelalarm 🐻" } },
   { text: "Freudentanz! 💃", emoji: "💃", type: "hearts" },
-  { text: "Selfie‑Time 🤳", emoji: "🤳", type: "message" },
+  { text: "Selfie-Time 🤳", emoji: "🤳", type: "message" },
   { text: "Wasser trinken! 💧", emoji: "💧", type: "message" },
 ];
 
@@ -35,7 +33,7 @@ const bgHearts = document.getElementById("bgHearts");
 
 let rotation = 0;        // absolute Rotation in Grad (CSS transform)
 let spinning = false;    // Sperre während Animation
-let lastChosen = null;   // gemerkter Index des gewählten Segments (für eindeutige Anzeige)
+let lastChosen = null;   // zuletzt gewählter Segmentindex
 
 // ===== Utilities =====
 function secureRandInt(min, max){
@@ -51,6 +49,24 @@ function secureRandFloat(min, max){
   return min + x * (max - min);
 }
 function mod(a, n){ return ((a % n) + n) % n; }
+
+// Transition-Fallback für iOS (falls 'transitionend' nicht feuert)
+function waitTransition(el, ms){
+  return new Promise(resolve => {
+    let done = false;
+    const clean = () => {
+      if(done) return;
+      done = true;
+      el.removeEventListener("transitionend", onEnd, true);
+      el.removeEventListener("webkitTransitionEnd", onEnd, true);
+      resolve();
+    };
+    const onEnd = () => clean();
+    el.addEventListener("transitionend", onEnd, true);
+    el.addEventListener("webkitTransitionEnd", onEnd, true);
+    setTimeout(clean, ms + 80); // kleiner Puffer
+  });
+}
 
 // ===== Wheel drawing (responsive, crisp on HiDPI) =====
 function setupCanvasSize(){
@@ -129,8 +145,8 @@ function drawWheel(){
   ctx.restore();
 }
 
-// ===== Spin logic with exact landing mapping =====
-function spin(){
+// ===== Spin logic with exact landing mapping (iOS-safe) =====
+async function spin(){
   if(spinning) return;
   spinning = true;
   spinBtn.disabled = true;
@@ -143,43 +159,49 @@ function spin(){
   const chosenIndex = secureRandInt(0, N-1);
   lastChosen = chosenIndex;
 
-  // 2) Wir wollen NICHT immer exakt die Mitte treffen -> kleiner Zufall innen im Segment
-  const margin = Math.min(6, seg/5); // Sicherheitsabstand zu den Rändern
+  // 2) Zufällig leicht neben der Segmentmitte landen
+  const margin = Math.min(6, seg/5);
   const randOffset = secureRandFloat(-(seg/2 - margin), (seg/2 - margin));
 
-  // 3) Winkel der Segmentmitte (bei Rotation 0) im Uhrzeigersinn von 12 Uhr aus
-  const mid = chosenIndex * seg + seg/2; // 0..360
+  // 3) Segmentmitte (bei Rotation 0) im Uhrzeigersinn von 12 Uhr
+  const mid = chosenIndex * seg + seg/2;
 
-  // 4) Zielwinkel so, dass mid + offset bei 12 Uhr (Zeiger) landet:
-  //    Wir lösen (rotation_new) ≡ -(mid + randOffset)  (mod 360)
+  // 4) Ziel kongruent zu -(mid + randOffset) mod 360
   const targetResidue = -(mid + randOffset);
   const baseResidue = mod(rotation, 360);
   let delta0 = mod(targetResidue - baseResidue, 360);
 
-  // 5) schöne Anzahl Umdrehungen hinzufügen
+  // 5) mehrere Umdrehungen für schöne Animation
   const spins = secureRandInt(4, 6);
   const delta = spins*360 + delta0;
   const total = rotation + delta;
 
-  // 6) Animation
-  canvas.style.transition = "transform 4.2s cubic-bezier(.12,.65,.07,1)";
-  canvas.style.transform = `rotate(${total}deg)`;
+  // 6) iOS-sicher animieren: Reflow + Doppel-rAF + Fallback-Timer
+  canvas.style.willChange = "transform";
+  // Force Reflow
+  void canvas.getBoundingClientRect();
 
-  const onEnd = () => {
-    canvas.removeEventListener("transitionend", onEnd);
-    rotation = total;
+  await new Promise(r => requestAnimationFrame(() => {
+    canvas.style.transition = "transform 4.2s cubic-bezier(.12,.65,.07,1)";
+    // noch ein rAF, damit Transition sicher „armt“
+    requestAnimationFrame(() => {
+      canvas.style.transform = `rotate(${total}deg)`;
+      r();
+    });
+  }));
 
-    // Ergebnis per chosenIndex (robust, exakt das anvisierte Segment)
-    showResult(lastChosen);
+  // Warten, egal ob 'transitionend' feuert
+  await waitTransition(canvas, 4200);
 
-    spinning = false;
-    spinBtn.disabled = false;
-    againBtn.style.display = "inline-block";
+  rotation = total; // finaler Winkel
+  showResult(lastChosen);
 
-    // Transition zurücksetzen
-    requestAnimationFrame(() => { canvas.style.transition = "transform .0s linear"; });
-  };
-  canvas.addEventListener("transitionend", onEnd);
+  spinning = false;
+  spinBtn.disabled = false;
+  againBtn.style.display = "inline-block";
+
+  // Transition zurücksetzen (ohne Sprung)
+  requestAnimationFrame(() => { canvas.style.transition = "transform 0s linear"; });
 }
 
 // ===== Ergebnis & Aktionen =====
@@ -204,7 +226,6 @@ function openOverlay({emoji, title, imageSrc, videoSrc, poster} = {}){
 
   overlayTitle.textContent = title || "";
 
-  // Media Bereich zurücksetzen
   overlayMedia.innerHTML = "";
   overlayMedia.setAttribute("aria-hidden", "true");
 
@@ -286,6 +307,5 @@ setupCanvasSize();
 spawnBackgroundHearts();
 
 // ===== Hinweise =====
-// • Für ein eigenes Video/Bild: beim gewünschten Segment in 'overlay' die Felder 'imageSrc' oder 'videoSrc' setzen.
-//   Beispiel: overlay: { videoSrc: "assets/cute.mp4", poster: "assets/smile.jpg", title: "Lustiges Video!" }
-// • Dateien lokal in den Ordner /assets legen. Funktioniert komplett offline.
+// • iOS Safari Fixes: doppeltes rAF + Fallback-Timer, transform:translateZ(0), viewport-fit=cover.
+// • Ergebnisanzeige bleibt exakt, da der gewählte Index (chosenIndex) verwendet wird.
