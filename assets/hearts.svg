@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160">
+  <rect width="100%" height="100%" fill="#fff0f6"/>
+  <g fill="#ff6b9e">
+    <path d="M120 120l-42-42a24 24 0 0 1 34-34l8 8l8-8a24 24 0 1 1 34 34l-42 42z" opacity=".9"/>
+  </g>
+  <text x="120" y="145" text-anchor="middle" font-family="system-ui,Segoe UI" font-size="16" fill="#ff6b9e">💗 Love!</text>
+</svg>

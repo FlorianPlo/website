@@ -4,415 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Glücksrad ❤️🎡</title>
-  <style>
-    :root{
-      --size: min(86vmin, 560px);
-      --bg1: #ffe9f3; /* pastell rosa */
-      --bg2: #e8f6ff; /* pastell blau */
-      --bg3: #ecffe8; /* pastell grün */
-      --card: rgba(255,255,255,.6);
-      --text: #2b2b2b;
-      --accent: #ff6b9e;
-    }
-
-    /* Verspielter, pastelliger Hintergrund mit sanfter Animation */
-    body{
-      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-                 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji";
-      color: var(--text);
-      height:100svh; display:flex; align-items:center; justify-content:center;
-      background: radial-gradient(1200px 1200px at 20% 10%, var(--bg1), transparent 60%),
-                  radial-gradient(1000px 1000px at 80% 0%, var(--bg2), transparent 55%),
-                  radial-gradient(1200px 900px at 50% 100%, var(--bg3), transparent 60%),
-                  linear-gradient(135deg, #fefcff, #f5fbff 55%, #fafff7);
-      overflow:hidden;
-    }
-
-    /* sanftes Schweben des Hintergrundes */
-    body::before{
-      content:""; position:fixed; inset:-10%;
-      background: radial-gradient(60px 60px at 15% 20%, #ffd6e7aa 30%, transparent 32%),
-                  radial-gradient(50px 50px at 85% 25%, #cdefffaa 30%, transparent 32%),
-                  radial-gradient(70px 70px at 30% 80%, #d6ffd0aa 30%, transparent 32%),
-                  radial-gradient(40px 40px at 70% 75%, #ffe7cdcc 30%, transparent 32%);
-      filter: blur(12px);
-      animation: floaty 24s linear infinite alternate;
-      z-index:0;
-      pointer-events:none;
-    }
-    @keyframes floaty{ to{ transform: translateY(-3%) translateX(2%);} }
-
-    /* schwebende Herzchen im Hintergrund */
-    .bg-hearts{ position:fixed; inset:0; pointer-events:none; z-index:0; }
-    .bg-hearts .heart{
-      position:absolute; font-size: clamp(16px, 3.5vmin, 28px);
-      opacity:.25; animation: rise linear infinite;
-      will-change: transform, opacity;
-    }
-    @keyframes rise{ from{ transform: translateY(8svh) scale(.9); opacity:.0 } to{ transform: translateY(-100svh) scale(1.1); opacity:.35 } }
-
-    .app{ position:relative; z-index:1; width: min(94vw, 720px); }
-
-    .card{
-      background: var(--card);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,.7);
-      box-shadow: 0 8px 24px rgba(0,0,0,.08);
-      border-radius: 22px;
-      padding: clamp(12px, 3.2vmin, 20px);
-    }
-
-    .title{ text-align:center; margin: 6px 0 12px; font-weight:700; letter-spacing:.2px; }
-
-    .wheel-wrap{ position:relative; margin-inline:auto; width: var(--size); height: var(--size); }
-    .wheel{ width:100%; height:100%; border-radius:50%; overflow:visible; display:block; }
-
-    /* Zeiger */
-    .pointer{
-      position:absolute; top:-10px; left:50%; transform: translateX(-50%);
-      width:0; height:0; border-left: 16px solid transparent; border-right: 16px solid transparent;
-      border-bottom: 26px solid var(--accent);
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,.18));
-    }
-
-    .controls{ display:flex; gap:12px; justify-content:center; margin-top: clamp(12px, 2.6vmin, 18px); flex-wrap:wrap; }
-
-    .btn{
-      -webkit-tap-highlight-color: transparent;
-      appearance:none; border:none; cursor:pointer; font-weight:700; letter-spacing:.2px;
-      padding: .9em 1.2em; border-radius: 16px; min-width: 140px;
-      background: linear-gradient(135deg, #ff93b9, #ff6b9e);
-      color:white; box-shadow: 0 8px 16px rgba(255, 107, 158, .35);
-      transition: transform .12s ease, box-shadow .12s ease, filter .2s ease;
-    }
-    .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 18px rgba(255, 107, 158, .42); }
-    .btn:active{ transform: translateY(1px); }
-    .btn:disabled{ opacity:.6; filter: grayscale(.2); cursor:not-allowed; }
-
-    .result{ margin-top: clamp(14px, 3vmin, 22px); text-align:center; }
-    .result .text{
-      font-size: clamp(22px, 5.6vmin, 40px);
-      font-weight: 800;
-      line-height: 1.2; letter-spacing:.2px;
-      text-shadow: 0 1px 0 #fff, 0 10px 24px rgba(0,0,0,.08);
-    }
-
-    /* Herz-Feuerwerk (bei Gewinnaktionen) */
-    .burst{ position:fixed; inset:0; pointer-events:none; z-index:5; }
-    .burst .p{ position:absolute; font-size: clamp(18px, 4vmin, 28px); will-change: transform, opacity; }
-    @keyframes pop{ 0%{ transform: translate(0,0) scale(0.4) rotate(0turn); opacity:1 }
-                    80%{ opacity:1 }
-                    100%{ transform: translate(var(--dx), var(--dy)) scale(1.1) rotate(.6turn); opacity:0 } }
-
-    /* Overlay für Bilder/Emoji-Aktionen */
-    .overlay{ position:fixed; inset:0; background: rgba(0,0,0,.25);
-              display:none; align-items:center; justify-content:center; z-index:6; }
-    .overlay[aria-hidden="false"]{ display:flex; }
-    .overlay-card{
-      background: rgba(255,255,255,.95); border-radius: 22px; padding: 22px 26px;
-      max-width: min(92vw, 520px); text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,.18);
-      animation: popin .35s ease;
-    }
-    @keyframes popin{ from{ transform: translateY(10px) scale(.98); opacity:0 } to{ transform: translateY(0) scale(1); opacity:1 } }
-    .overlay-emoji{ font-size: clamp(56px, 18vmin, 140px); line-height:1; display:block; }
-    .overlay-title{ font-size: clamp(18px, 5vmin, 28px); font-weight:800; margin: 10px 0 6px; }
-    .overlay-sub{ opacity:.7; font-size: clamp(14px, 3.6vmin, 16px); }
-
-    /* Barrierearme Bewegungen */
-    @media (prefers-reduced-motion: reduce){
-      *{ animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: 0ms !important; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="bg-hearts" id="bgHearts" aria-hidden="true"></div>
 
-  <!-- schwebende Herzchen im Hintergrund -->
-  <div class="bg-hearts" id="bgHearts"></div>
-
-  <div class="app">
-    <div class="card">
+  <main class="app" role="main">
+    <section class="card" aria-label="Glücksrad">
       <h1 class="title">Glücksrad ❤️🎡</h1>
+
       <div class="wheel-wrap" aria-live="polite">
         <div class="pointer" aria-hidden="true"></div>
-        <!-- Wir drehen die ganze Canvas-Fläche per CSS-Transform -->
         <canvas id="wheel" class="wheel" width="600" height="600"></canvas>
       </div>
 
       <div class="controls">
-        <button class="btn" id="spinBtn">Drehen</button>
-        <button class="btn" id="againBtn" style="background:linear-gradient(135deg,#9ad8ff,#6abbff); display:none;">Nochmal! 🔁</button>
+        <button class="btn" id="spinBtn" aria-label="Drehen">Drehen</button>
+        <button class="btn btn-secondary" id="againBtn" style="display:none;" aria-label="Nochmal drehen">Nochmal! 🔁</button>
       </div>
 
-      <div class="result" id="result">
-        <div class="text" id="resultText">Tippe auf <b>Drehen</b> und lass das Glück entscheiden ✨</div>
+      <div class="result" id="result" aria-live="polite" aria-atomic="true">
+        <div class="text" id="resultText">Tippe auf <b>Drehen</b> ✨</div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- Aktion: Overlay (Bild/Emoji) -->
+  <!-- Overlay für Bild/Video/Emoji-Aktionen -->
   <div class="overlay" id="overlay" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="overlay-card" role="document">
-      <span class="overlay-emoji" id="overlayEmoji">🐻</span>
+      <div id="overlayMedia" class="overlay-media" aria-hidden="true"></div>
+      <span class="overlay-emoji" id="overlayEmoji" aria-hidden="true">🐻</span>
       <div class="overlay-title" id="overlayTitle">Kuschelalarm 🐻</div>
       <div class="overlay-sub">Zum Schließen tippen</div>
     </div>
   </div>
 
   <!-- Herz-Feuerwerk Container -->
-  <div class="burst" id="burst"></div>
+  <div class="burst" id="burst" aria-hidden="true"></div>
 
-  <script>
-  // ====== Daten für die Segmente ======
-  // Du kannst hier Texte & Emojis anpassen oder weitere Segmente hinzufügen.
-  const segments = [
-    { text: "Ich hab dich lieb ❤️", emoji: "❤️", action: "hearts" },
-    { text: "Kusspause! 😘", emoji: "😘", action: "overlay", overlay: { emoji: "😘", title: "Kusspause! 😘" } },
-    { text: "Fast daheim 🚋", emoji: "🚋", action: "overlay", overlay: { emoji: "🚋", title: "Fast daheim 🚋" } },
-    { text: "Zeit für einen Keks 🍪", emoji: "🍪", action: "overlay", overlay: { emoji: "🍪", title: "Zeit für einen Keks 🍪" } },
-    { text: "Kuschelalarm 🐻", emoji: "🐻", action: "overlay", overlay: { emoji: "🐻", title: "Kuschelalarm 🐻" } },
-    { text: "Freudentanz! 💃", emoji: "💃", action: "hearts" },
-    { text: "Selfie‑Time 🤳", emoji: "🤳", action: "message" },
-    { text: "Wasser trinken! 💧", emoji: "💧", action: "message" },
-  ];
-
-  // Pastellige Segmentfarben
-  const colors = [
-    "#ffd6e7", "#d4f1ff", "#e9ffd6", "#fff3c9", "#e5d6ff", "#d6fff7", "#ffd6f1", "#d6f9ff"
-  ];
-
-  // ====== Canvas-Zeichnen des Rads ======
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const wheelWrap = document.querySelector('.wheel-wrap');
-  const spinBtn = document.getElementById('spinBtn');
-  const againBtn = document.getElementById('againBtn');
-  const resultText = document.getElementById('resultText');
-
-  function setupCanvasSize(){
-    // Größe dynamisch an --size koppeln
-    const size = parseFloat(getComputedStyle(wheelWrap).width);
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.style.width = size + 'px';
-    canvas.style.height = size + 'px';
-    canvas.width = Math.floor(size * dpr);
-    canvas.height = Math.floor(size * dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    drawWheel();
-  }
-
-  function drawWheel(){
-    const sizePx = parseFloat(getComputedStyle(wheelWrap).width);
-    const r = sizePx/2;
-    const center = { x: r, y: r };
-    ctx.clearRect(0,0,sizePx,sizePx);
-
-    const N = segments.length;
-    const segAngle = (Math.PI*2)/N;
-
-    // Kreisbasis
-    ctx.save();
-    ctx.translate(center.x, center.y);
-
-    // Segmente
-    for(let i=0; i<N; i++){
-      const start = -Math.PI/2 + i*segAngle; // Start bei 12 Uhr
-      const end = start + segAngle;
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.arc(0,0,r-6,start,end);
-      ctx.closePath();
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.fill();
-
-      // Trenner
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Emoji + kleiner Textbogen
-      ctx.save();
-      // Mittelwinkel für die Platzierung
-      const mid = start + segAngle/2;
-      const labelR = r*0.62;
-      ctx.translate(Math.cos(mid)*labelR, Math.sin(mid)*labelR);
-      ctx.rotate(mid + Math.PI/2);
-
-      // Emoji
-      ctx.font = `bold ${Math.max(20, r*0.1)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji", system-ui`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#333';
-      ctx.fillText(segments[i].emoji, 0, -2);
-
-      // Kleiner, dezenter Text (optional, gekürzt)
-      ctx.font = `500 ${Math.max(10, r*0.045)}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-      const short = segments[i].text.replace(/(.{24}).*/, '$1…');
-      ctx.fillStyle = '#4b4b4b';
-      ctx.fillText(short, 0, Math.max(12, r*0.09));
-      ctx.restore();
-    }
-
-    // Außenrand
-    ctx.beginPath();
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = "#ffffff";
-    ctx.arc(0,0,r-6,0,Math.PI*2);
-    ctx.stroke();
-
-    // Nabe
-    ctx.beginPath();
-    ctx.fillStyle = "#ffffff";
-    ctx.arc(0,0, r*0.08, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  // ====== Drehen & Ergebnis ======
-  let rotation = 0; // aktuelle Rotation in Grad
-  let spinning = false;
-
-  function randInt(min,max){ return Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * (max-min+1)) + min; }
-  function randFloat(min,max){ return min + (crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296) * (max-min); }
-
-  function spin(){
-    if(spinning) return;
-    spinning = true; spinBtn.disabled = true; againBtn.style.display = 'none';
-
-    const N = segments.length;
-    const seg = 360 / N;
-
-    // Zufälliges Zielsegment bestimmen
-    const chosenIndex = randInt(0, N-1);
-    // Kleine zufällige Abweichung innerhalb des Segments, damit die Kante nicht genau getroffen wird
-    const epsilon = randFloat(6, Math.max(7, seg-6));
-    // Der Index k, der an der 12-Uhr-Position (Zeiger) landen soll (siehe Erklärung im Code)
-    const k = (N - chosenIndex) % N;
-
-    // Ziel-Rotation: so, dass (rotation + delta) % 360 = k*seg + epsilon
-    const spins = randInt(4,6); // Anzahl Vollumdrehungen für eine schöne Animation
-    const currentMod = ((rotation % 360) + 360) % 360;
-    const targetMod = k*seg + epsilon;
-    let delta = targetMod - currentMod;
-    if(delta < 0) delta += 360; // minimaler positiver Zusatz bis zum Zielwinkel innerhalb einer Umdrehung
-    const total = rotation + spins*360 + delta; // absolute Zielrotation
-
-    // CSS-Transition auf die Canvas (wir drehen das Element, nicht neu zeichnen)
-    canvas.style.transition = 'transform 4.2s cubic-bezier(.12,.65,.07,1)';
-    canvas.style.transform = `rotate(${total}deg)`;
-
-    // Nach Ende der Transition: Ergebnis anzeigen
-    const onEnd = () => {
-      canvas.removeEventListener('transitionend', onEnd);
-      rotation = total; // aktualisiere aktuelle Rotation
-      const idx = indexAtPointer(rotation, N);
-      showResult(idx);
-      spinning = false; spinBtn.disabled = false; againBtn.style.display = 'inline-block';
-      // kurze Nachlauf-Transition entfernen
-      requestAnimationFrame(() => { canvas.style.transition = 'transform .0s linear'; });
-    };
-    canvas.addEventListener('transitionend', onEnd);
-  }
-
-  function indexAtPointer(rot, N){
-    const seg = 360 / N;
-    const mod = ((rot % 360) + 360) % 360; // 0..359
-    const k = Math.floor(mod / seg);
-    // Durch Drehung im Uhrzeigersinn wandert am Zeiger der Index rückwärts
-    return (N - k) % N;
-  }
-
-  function showResult(idx){
-    const item = segments[idx];
-    resultText.textContent = item.text;
-
-    if(item.action === 'overlay' && item.overlay){
-      openOverlay(item.overlay.emoji, item.overlay.title || item.text);
-    } else if(item.action === 'hearts'){
-      heartBurst();
-    } else {
-      // einfache Nachricht – zusätzlich kleine Herz-Animation
-      heartBurst(12);
-    }
-  }
-
-  // ====== Overlay (Bild/Emoji) ======
-  const overlay = document.getElementById('overlay');
-  const overlayEmoji = document.getElementById('overlayEmoji');
-  const overlayTitle = document.getElementById('overlayTitle');
-
-  function openOverlay(emoji, title){
-    overlayEmoji.textContent = emoji || '💗';
-    overlayTitle.textContent = title || '';
-    overlay.setAttribute('aria-hidden', 'false');
-  }
-  overlay.addEventListener('click', () => overlay.setAttribute('aria-hidden','true'));
-
-  // ====== Herz-Feuerwerk ======
-  const burst = document.getElementById('burst');
-  function heartBurst(count = 22){
-    const rect = canvas.getBoundingClientRect();
-    const cx = rect.left + rect.width/2;
-    const cy = rect.top + rect.height/2;
-
-    for(let i=0;i<count;i++){
-      const span = document.createElement('span');
-      span.className = 'p';
-      span.textContent = ['❤️','💗','💖','💞','💘'][i%5];
-      // zufällige Richtung
-      const angle = (i / count) * Math.PI*2 + (Math.random()*0.6 - 0.3);
-      const dist = (Math.random()*1 + 0.7) * (rect.width*0.45);
-      const dx = Math.cos(angle)*dist;
-      const dy = Math.sin(angle)*dist;
-      span.style.left = `${cx}px`;
-      span.style.top = `${cy}px`;
-      span.style.setProperty('--dx', dx + 'px');
-      span.style.setProperty('--dy', dy + 'px');
-      span.style.animation = `pop ${800 + Math.random()*400}ms ease-out forwards`;
-      burst.appendChild(span);
-      setTimeout(() => span.remove(), 1300);
-    }
-  }
-
-  // ====== schwebende Hintergrund-Herzen erzeugen ======
-  const bgHearts = document.getElementById('bgHearts');
-  function spawnBackgroundHearts(){
-    const total = 14;
-    for(let i=0;i<total;i++){
-      const h = document.createElement('span');
-      h.className = 'heart';
-      h.textContent = ['💗','💖','💞','💘','💜'][i%5];
-      h.style.left = (Math.random()*100) + 'vw';
-      const dur = 14 + Math.random()*18;
-      const delay = Math.random()*-dur; // versetzt starten
-      h.style.animationDuration = dur + 's';
-      h.style.animationDelay = delay + 's';
-      bgHearts.appendChild(h);
-    }
-  }
-
-  // ====== Events ======
-  spinBtn.addEventListener('click', spin);
-  againBtn.addEventListener('click', spin);
-  window.addEventListener('resize', setupCanvasSize);
-
-  // Initialisierung
-  setupCanvasSize();
-  spawnBackgroundHearts();
-
-  // Tastatur: Leertaste/Enter starten Drehen
-  document.addEventListener('keydown', (e) => {
-    if(e.key === ' ' || e.key === 'Enter'){
-      e.preventDefault();
-      if(!spinning) spin();
-    }
-  });
-
-  // ====== Hinweise ======
-  // • Diese Datei funktioniert komplett offline.
-  // • Um ein eigenes Video einzublenden, könntest du in openOverlay() statt Emoji ein <video> nutzen
-  //   und eine kleine, lokal gespeicherte MP4 als <source> einbetten.
-  // • Weitere Segmente hinzufügen? Einfach im Array "segments" ergänzen – die Zeichnung passt sich an.
-  </script>
+  <script src="wheel.js" defer></script>
 </body>
 </html>
