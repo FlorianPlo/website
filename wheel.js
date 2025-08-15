@@ -38,7 +38,7 @@ const segments = [
     text: "Spielzeugzeit 🧸",
     emoji: "🧸",
     type: "overlay",
-    overlay: { title: "LEGO!", imageSrc: "img/lego.jpeg" }
+    overlay: { title: "LEGO!", imageSrc: "img/lego.png" }
   },
   {
     text: "Kusspause! 😘",
