@@ -200,6 +200,21 @@ function drawWheel(){
   ctx.restore();
 }
 
+function setupCanvasSize(){
+  let size = parseFloat(getComputedStyle(wheelWrap).width);
+  if(!size || size <= 0){
+    console.warn("[Glücksrad] wheel-wrap width war 0 – nutze 300px Fallback. Prüfe, ob styles.css geladen wurde.");
+    size = 300; // Fallback, damit das Rad immer sichtbar ist
+  }
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.style.width = size + "px";
+  canvas.style.height = size + "px";
+  canvas.width = Math.floor(size * dpr);
+  canvas.height = Math.floor(size * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  drawWheel();
+}
+
 // ===== Spin logic with exact landing mapping (iOS-safe) =====
 async function spin(){
   if(spinning) return;
