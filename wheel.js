@@ -7,27 +7,7 @@
 // 6) 😘 Kusspause
 // 7) 🛏️ Gute Nacht
 // 8) 💃 Herzfunken-Party
-const segments = [
-  {
-    text: "",
-    emoji: "📷",
-    type: "randomImageOverlay",
-    pattern: "img/{n}.jpeg",
-    count: 8,
-    overlay: { title: "Picture Time 📷" }
-  },
-  {
-    text: "",
-    emoji: "❤️",
-    type: "overlayHearts",
-    overlay: { emoji: "❤️", title: "I lieb di 🥰❤️" }
-  },
-  {
-    text: "",
-    emoji: "🚕",
-    type: "overlay",
-    overlay: { emoji: "🚕", title: "Fast daheim – bleib sicher <3" } // 'bleib' statt 'blib'
-  },
+
   {
     text: "",
     emoji: "🎬",
