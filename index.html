@@ -1,3 +1,110 @@
-fer></script>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Das Rad des Kummers</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #121212; /* Dunkler Hintergrund */
+            color: #e0e0e0; /* Helle Textfarbe */
+            text-align: center;
+            padding: 20px;
+        }
+
+        #depressing-text {
+            min-height: 100px; /* Platzhalter für den Text */
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            color: #ff6666; /* Traurige Farbe */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #spin-button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: 2px solid #5c5c5c;
+            border-radius: 8px;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #spin-button:hover {
+            background-color: #3a3a3a;
+        }
+
+        #spin-button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Das Rad des Kummers</h1>
+
+    <div id="depressing-text">Klicke, um deine nächste Enttäuschung zu enthüllen.</div>
+
+    <button id="spin-button">Drehen</button>
+
+    <script>
+        // Array mit poetischen/deprimierenden Sätzen
+        const sentences = [
+            "Du hast meine Träume zerstört.",
+            "Manchmal ist es besser, einfach zu schweigen, als zu sagen, was man wirklich fühlt.",
+            "Die Hoffnung ist nur eine weitere Form der Grausamkeit.",
+            "Alleine in einem überfüllten Raum ist das schlimmste Alleinsein.",
+            "Und wieder einmal war das Glück nicht auf deiner Seite.",
+            "Nichts verändert sich, alles bleibt leer.",
+            "Die Stille zwischen den Worten ist die lauteste.",
+            "Dein Glück ist ein Witz, den niemand versteht.",
+            "Die Sonne ging unter, aber die Dunkelheit in mir blieb.",
+            "Das größte Risiko ist, dass es sich am Ende nicht gelohnt hat.",
+            "Am Ende bereust du nur die Chancen, die du nicht genutzt hast.",
+            "Ein Echo auf eine Frage, die nie gestellt wurde.",
+            "Du wartest auf ein Happy End, das in diesem Drehbuch nicht vorgesehen ist."
+        ];
+
+        const button = document.getElementById('spin-button');
+        const textDisplay = document.getElementById('depressing-text');
+
+        // Speichere den zuletzt angezeigten Index, um Wiederholungen zu vermeiden
+        let lastIndex = -1;
+
+        function getRandomSentence() {
+            let newIndex;
+            do {
+                // Erzeugt eine zufällige Zahl zwischen 0 und der Länge des Arrays minus 1
+                newIndex = Math.floor(Math.random() * sentences.length);
+            } while (newIndex === lastIndex && sentences.length > 1); // Solange der Satz der gleiche ist (und das Array nicht nur einen Satz hat)
+
+            lastIndex = newIndex;
+            return sentences[newIndex];
+        }
+
+        function spinWheel() {
+            // Fading-Effekt für sanfteren Übergang
+            textDisplay.style.opacity = 0;
+
+            setTimeout(() => {
+                const newSentence = getRandomSentence();
+                textDisplay.textContent = newSentence;
+                textDisplay.style.opacity = 1;
+            }, 500); // Warte 500ms (halbe Sekunde) während des Fades
+        }
+
+        // Event-Listener: Ruft die Funktion 'spinWheel' auf, wenn der Button geklickt wird
+        button.addEventListener('click', spinWheel);
+
+    </script>
+
 </body>
 </html>
