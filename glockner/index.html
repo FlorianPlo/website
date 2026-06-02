@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zell am See — Glocknerkönig Weekend</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f6faf4;
+  --bg-alt:      #eef5ea;
+  --white:       #ffffff;
+  --green-light: #a8c99a;
+  --green-mid:   #6fa05a;
+  --green-dark:  #3d6b30;
+  --green-deep:  #2a4a20;
+  --blue-acc:    #4a7fa8;
+  --gold:        #c8960a;
+  --gold-light:  #f0d06a;
+  --text:        #2a3222;
+  --text-mid:    #4a5840;
+  --text-light:  #7a8870;
+  --border:      #c8d8c0;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  height: 540px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem 3.5rem;
+  overflow: hidden;
+}
+.hero-img {
+  position: absolute; inset: 0;
+  background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Zell_am_See_Panorama.jpg/1280px-Zell_am_See_Panorama.jpg');
+  background-size: cover; background-position: center 50%;
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(15,28,10,0.82) 0%, rgba(15,28,10,0.25) 55%, transparent 100%);
+}
+.hero-content { position: relative; z-index: 2; max-width: 700px; }
+.hero-eyebrow {
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--gold-light); margin-bottom: 0.7rem;
+}
+.hero h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  font-weight: 700; color: #fff; line-height: 1.08; margin-bottom: 0.9rem;
+}
+.hero h1 em { font-style: italic; color: var(--gold-light); }
+.hero-sub { font-size: 0.96rem; color: rgba(255,255,255,0.82); margin-bottom: 1.6rem; max-width: 460px; }
+.hero-badges { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.badge {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; padding: 0.28rem 0.8rem; border-radius: 2rem; font-size: 0.75rem;
+}
+
+/* ── BUDGET BANNER ── */
+.budget-banner {
+  background: var(--green-deep); color: #fff;
+  padding: 1.8rem 3.5rem; display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;
+}
+.budget-banner-label { font-family: Georgia, serif; font-size: 0.85rem; color: var(--gold-light); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.budget-banner-label span { display: block; font-family: sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.45); font-weight: 400; text-transform: none; letter-spacing: 0; margin-top: 0.2rem; }
+.budget-items { display: flex; gap: 2.5rem; flex-wrap: wrap; flex: 1; align-items: center; }
+.b-item { text-align: center; }
+.b-item .amt { font-family: Georgia, serif; font-size: 1.7rem; font-weight: 700; color: #fff; display: block; line-height: 1.1; }
+.b-item .lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); }
+.b-total { border-left: 1px solid rgba(255,255,255,0.2); padding-left: 2.5rem; }
+.b-total .amt { color: var(--gold-light); font-size: 2rem; }
+
+/* ── TRANSPORT STRIP ── */
+.transport-strip {
+  background: var(--bg-alt); border-top: 3px solid var(--green-mid);
+  padding: 1.4rem 3.5rem; display: flex; gap: 3rem; flex-wrap: wrap; align-items: flex-start;
+}
+.transport-strip h3 { font-family: Georgia, serif; font-size: 0.78rem; color: var(--green-dark); text-transform: uppercase; letter-spacing: 0.14em; white-space: nowrap; padding-top: 0.15rem; font-weight: 700; }
+.transport-items { display: flex; gap: 2rem; flex-wrap: wrap; flex: 1; }
+.t-item { font-size: 0.82rem; color: var(--text-mid); }
+.t-item strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 0.1rem; }
+
+/* ── PHOTO BLOCK ── */
+.photo-block {
+  margin: 0 3.5rem 2.5rem;
+  border-radius: 6px; overflow: hidden;
+  position: relative;
+}
+.photo-block img {
+  width: 100%; display: block;
+  height: 320px; object-fit: cover;
+  background: var(--bg-alt);
+}
+.photo-block .photo-caption {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(10,20,8,0.7) 0%, transparent 100%);
+  padding: 1.2rem 1rem 0.7rem;
+  font-size: 0.72rem; color: rgba(255,255,255,0.8);
+  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+}
+.photo-grid {
+  margin: 0 3.5rem 2.5rem;
+  display: grid; grid-template-columns: 1.5fr 1fr; gap: 0.5rem;
+  border-radius: 6px; overflow: hidden;
+}
+.photo-grid img {
+  width: 100%; display: block; object-fit: cover;
+  background: var(--bg-alt);
+}
+.photo-grid img:first-child { height: 320px; }
+.photo-grid img:last-child { height: 320px; }
+.photo-strip {
+  margin: 0 3.5rem 2.5rem;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;
+  border-radius: 6px; overflow: hidden;
+}
+.photo-strip img { width: 100%; height: 200px; display: block; object-fit: cover; background: var(--bg-alt); }
+
+/* ── DAY SECTIONS ── */
+.day-section { padding: 4rem 0 3rem; border-bottom: 1px solid var(--border); }
+.day-section:nth-child(odd) { background: var(--bg); }
+.day-section:nth-child(even) { background: var(--bg-alt); }
+.day-header { display: flex; align-items: flex-start; gap: 1.5rem; padding: 0 3.5rem; margin-bottom: 2rem; }
+.day-num { font-family: Georgia, serif; font-size: 4.5rem; font-weight: 700; color: var(--border); line-height: 1; flex-shrink: 0; user-select: none; }
+.day-title-block { padding-top: 0.3rem; }
+.day-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green-mid); margin-bottom: 0.3rem; }
+.day-title { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 700; color: var(--text); line-height: 1.15; }
+.day-title em { font-style: italic; color: var(--green-dark); }
+
+/* ── ACTIVITIES ── */
+.activities { padding: 0 3.5rem; display: flex; flex-direction: column; gap: 1.6rem; }
+.activity { display: grid; grid-template-columns: 110px 1fr; gap: 1.5rem; align-items: start; }
+.act-time { text-align: right; padding-right: 1.4rem; border-right: 2px solid var(--border); padding-top: 0.1rem; color: var(--text-light); font-size: 0.8rem; font-weight: 600; }
+.act-title { font-family: Georgia, serif; font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.pill { font-family: sans-serif; font-size: 0.65rem; font-weight: 600; padding: 0.18rem 0.55rem; border-radius: 2rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.pill.free    { background: #d8efd0; color: var(--green-dark); }
+.pill.cheap   { background: #e0f0d8; color: #3a6028; }
+.pill.splurge { background: #f0e8d4; color: #7a4820; }
+.pill.you     { background: #d4e8f4; color: #2a5878; }
+.pill.friends { background: #f0dce8; color: #783058; }
+.act-desc { font-size: 0.88rem; color: var(--text-mid); line-height: 1.65; }
+.act-desc strong { color: var(--text); font-weight: 600; }
+
+/* ── OPTIONS ── */
+.options { margin-top: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.option { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.84rem; color: var(--text-mid); }
+.option-lbl { font-weight: 600; color: var(--text); margin-right: 0.3rem; }
+.tip { margin-top: 0.6rem; background: #f0f8ec; border-left: 3px solid var(--green-mid); padding: 0.65rem 0.9rem; font-size: 0.8rem; color: var(--text-mid); border-radius: 0 5px 5px 0; }
+.tip strong { color: var(--text); }
+.warn-box { margin-top: 0.6rem; background: #fef8ec; border-left: 3px solid var(--gold); padding: 0.65rem 0.9rem; font-size: 0.8rem; color: #6a4010; border-radius: 0 5px 5px 0; }
+
+/* ── PHOTO INLINE ── */
+.inline-photo { margin: 0.8rem 0; border-radius: 5px; overflow: hidden; }
+.inline-photo img { width: 100%; height: 200px; object-fit: cover; display: block; background: var(--bg-alt); }
+.inline-photo p { font-size: 0.7rem; color: var(--text-light); margin-top: 0.35rem; font-style: italic; }
+
+/* ── GALLERY ── */
+.gallery-section { padding: 4rem 3.5rem; background: var(--green-deep); }
+.gallery-section h2 { font-family: Georgia, serif; font-size: 1.8rem; color: var(--gold-light); margin-bottom: 0.4rem; }
+.gallery-section .sub { font-size: 0.82rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+.gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.gallery-item { border-radius: 5px; overflow: hidden; position: relative; }
+.gallery-item img { width: 100%; height: 220px; object-fit: cover; display: block; background: rgba(255,255,255,0.1); }
+.gallery-item .g-cap { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%); padding: 0.8rem 0.6rem 0.4rem; font-size: 0.68rem; color: rgba(255,255,255,0.85); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ── COST TABLE ── */
+.cost-section { background: var(--green-deep); padding: 4rem 3.5rem; }
+.cost-section h2 { font-family: Georgia, serif; font-size: 1.8rem; font-weight: 700; color: var(--gold-light); margin-bottom: 0.4rem; }
+.cost-section .sub { font-size: 0.82rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+.cost-table { width: 100%; max-width: 620px; border-collapse: collapse; font-size: 0.88rem; color: rgba(255,255,255,0.85); }
+.cost-table tr { border-bottom: 1px solid rgba(255,255,255,0.09); }
+.cost-table tr:last-child { border-bottom: none; }
+.cost-table td { padding: 0.75rem 0; vertical-align: top; }
+.cost-table td:last-child { text-align: right; font-family: Georgia, serif; font-weight: 700; color: #fff; white-space: nowrap; padding-left: 2rem; }
+.cost-table .note { font-size: 0.72rem; color: rgba(255,255,255,0.38); display: block; margin-top: 0.1rem; }
+.cost-table .total-row td { padding-top: 1.2rem; color: var(--gold-light); font-weight: 700; font-size: 1rem; border-top: 1px solid rgba(255,255,255,0.25); }
+.cost-table .total-row td:last-child { font-family: Georgia, serif; font-size: 1.5rem; color: var(--gold-light); }
+
+/* ── FOOTER ── */
+footer { background: var(--green-deep); border-top: 1px solid rgba(255,255,255,0.1); padding: 1.8rem 3.5rem; font-size: 0.76rem; color: rgba(255,255,255,0.35); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .hero, .day-header, .activities, .transport-strip, .budget-banner, .cost-section, footer, .gallery-section { padding-left: 1.4rem; padding-right: 1.4rem; }
+  .day-num { font-size: 3rem; }
+  .activity { grid-template-columns: 70px 1fr; gap: 0.8rem; }
+  .budget-items { gap: 1.2rem; }
+  .b-total { border-left: none; padding-left: 0; }
+  .photo-block, .photo-grid, .photo-strip { margin-left: 1.4rem; margin-right: 1.4rem; }
+  .photo-grid, .photo-strip { grid-template-columns: 1fr; }
+  .gallery-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.hero-content > * { animation: fadeUp 0.65s ease both; }
+.hero-eyebrow { animation-delay: 0.1s; }
+.hero h1 { animation-delay: 0.22s; }
+.hero-sub { animation-delay: 0.36s; }
+.hero-badges { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-img"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Jun 6 – 8, 2026 &nbsp;·&nbsp; Salzburg, Austria</p>
+    <h1>Zell am See<br><em>&amp; Glocknerkönig</em></h1>
+    <p class="hero-sub">A budget weekend in the Alps — lake, glacier, gorge, and a 1,672m race finish at 2,428m.</p>
+    <div class="hero-badges">
+      <span class="badge">🚆 No car needed</span>
+      <span class="badge">🏔️ 3 mountains in 3 days</span>
+      <span class="badge">💶 ~€290/person all-in</span>
+      <span class="badge">🚴 Glocknerkönig Classic</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BUDGET BANNER ═══ -->
+<div class="budget-banner">
+  <div>
+    <div class="budget-banner-label">Cost per person
+      <span>Including return train from Vienna</span>
+    </div>
+  </div>
+  <div class="budget-items">
+    <div class="b-item"><span class="amt">€60</span><span class="lbl">Vienna train</span></div>
+    <div class="b-item"><span class="amt">€90</span><span class="lbl">2 nights accommodation</span></div>
+    <div class="b-item"><span class="amt">€45</span><span class="lbl">Activities</span></div>
+    <div class="b-item"><span class="amt">€55</span><span class="lbl">Food & local transport</span></div>
+    <div class="b-item b-total"><span class="amt">~€290</span><span class="lbl">Total (friends: +€25 bus)</span></div>
+  </div>
+</div>
+
+<!-- ═══ TRANSPORT ═══ -->
+<div class="transport-strip">
+  <h3>Getting Around</h3>
+  <div class="transport-items">
+    <div class="t-item"><strong>🚆 Vienna → Zell am See</strong>~3h, ~€60/person. Book early on oebb.at.</div>
+    <div class="t-item"><strong>🚆 Zell am See ↔ Bruck</strong>5 min, every 30 min, ~€1.50.</div>
+    <div class="t-item"><strong>🚌 Bus 660 → Kaprun / Kitzsteinhorn</strong>From Postplatz, ~€5, ~31 min. Check summer timetable on oebb.at.</div>
+    <div class="t-item"><strong>🚌 Besucherbus (race day)</strong>€25/person (friends). Buy Sat at expo. Only 244 tickets.</div>
+  </div>
+</div>
+
+<!-- ═══ FRIDAY ═══ -->
+<section class="day-section">
+  <div class="day-header">
+    <div class="day-num">01</div>
+    <div class="day-title-block">
+      <p class="day-label">Friday, June 6 &nbsp;·&nbsp; Arrive 3pm</p>
+      <h2 class="day-title">The Lake <em>&amp; the Town</em></h2>
+    </div>
+  </div>
+
+  <div class="photo-grid">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Zell_am_See_Panorama.jpg/1280px-Zell_am_See_Panorama.jpg" alt="Zell am See panorama with lake and mountains" loading="lazy">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/ZellAmSee_UferPromenade_GrandHotel.JPG/800px-ZellAmSee_UferPromenade_GrandHotel.JPG" alt="Zell am See lakeside promenade" loading="lazy">
+  </div>
+
+  <div class="activities">
+    <div class="activity">
+      <div class="act-time">3:00 pm</div>
+      <div>
+        <div class="act-title">Check in — Pension Buchner <span class="pill cheap">~€45/night</span></div>
+        <p class="act-desc">Central guesthouse, 2 min walk to the lake. Clean, well-reviewed, no fuss. <strong>Book in advance</strong> — fills up on race weekend.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">4:00 pm</div>
+      <div>
+        <div class="act-title">Explore the lake <span class="pill free">Free</span> <span class="pill cheap">or ~€12</span></div>
+        <div class="options">
+          <div class="option"><span class="option-lbl">Option A — Lake Boat Tour (~€12):</span> 1h scenic cruise from the Esplanade pier. Open-deck boat, mountain panorama all around, departs every hour until ~5pm.</div>
+          <div class="option"><span class="option-lbl">Option B — Walk the lake (free):</span> The full loop is ~13km but you can do half and turn back. Best free thing in town — spectacular evening light on the water with the Schmittenhöhe rising behind.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">5:30 pm</div>
+      <div>
+        <div class="act-title">Old Town Stroll <span class="pill free">Free</span></div>
+        <p class="act-desc">Walk the <strong>Elisabeth-Promenade</strong> and through <strong>Stadtplatz</strong>. Medieval Vogtturm tower, swans on the lake, local shops. No entry needed — just walk.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">6:30 pm</div>
+      <div>
+        <div class="act-title">Swim — Strandbad Zell am See <span class="pill free">Free</span></div>
+        <p class="act-desc">Crystal-clear, drinking-water-quality lake. Diving platforms, grass for sitting. Open until 7pm. Mountain backdrop makes this one of the best free swims in Austria.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">8:00 pm</div>
+      <div>
+        <div class="act-title">Dinner — Christian's Gasthaus <span class="pill cheap">~€12–15</span></div>
+        <p class="act-desc">Honest Austrian Gasthaus, <strong>enormous portions</strong>, Schnitzel around €12. Not on the tourist strip. Open Fri–Sun from 2pm.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SATURDAY ═══ -->
+<section class="day-section">
+  <div class="day-header">
+    <div class="day-num">02</div>
+    <div class="day-title-block">
+      <p class="day-label">Saturday, June 7 &nbsp;·&nbsp; Full day out</p>
+      <h2 class="day-title">Gorge, <em>Glacier</em> &amp; Bib Pickup</h2>
+    </div>
+  </div>
+
+  <div class="photo-grid">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Kaprun_Sigmund_Thun_Klamm.jpg/1280px-Kaprun_Sigmund_Thun_Klamm.jpg" alt="Sigmund Thun Klamm gorge Kaprun" loading="lazy">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Kitzsteinhorn_3203m.jpg/800px-Kitzsteinhorn_3203m.jpg" alt="Kitzsteinhorn glacier mountain" loading="lazy">
+  </div>
+
+  <div class="activities">
+    <div class="activity">
+      <div class="act-time">7:15 am</div>
+      <div>
+        <div class="act-title">Breakfast — HOFER supermarket <span class="pill cheap">~€5</span></div>
+        <p class="act-desc">Bread, cheese, cold cuts, fruit — and a packed lunch for the whole day. This is the move for all three days; avoid the lakefront cafés.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">8:30 am</div>
+      <div>
+        <div class="act-title">Bus 660 to Kaprun <span class="pill cheap">~€5</span></div>
+        <p class="act-desc">From Zell am See <strong>Postplatz</strong>. ~20 min to Kaprun Ortsmitte. Check the summer timetable on oebb.at the night before.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">9:15 am</div>
+      <div>
+        <div class="act-title">Sigmund-Thun-Klamm gorge <span class="pill cheap">~€5</span></div>
+        <p class="act-desc">10 min walk from the bus stop. <strong>Wooden walkways bolted directly into the cliff face</strong> above a roaring torrent. About 1 hour, open from 9am. Suitable for all fitness levels — but the noise and drama is unlike anything else.
+        <br><br><strong>For you (race eve):</strong> Very gentle walking, legs stay fresh.</p>
+        <div class="tip"><strong>Alternative morning:</strong> Bus 71 to the Schmittenhöhe cable car (~€20 return) — ride up to 1,965m and walk the panorama trail above Zell am See. Better if you prefer open mountain views over enclosed gorge drama.</div>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">11:00 am</div>
+      <div>
+        <div class="act-title">Kitzsteinhorn — Gipfelwelt 3000 <span class="pill splurge">~€40 cable car</span></div>
+        <p class="act-desc">Bus 660 continues from Kaprun to the valley station. Cable cars to <strong>3,029m</strong> — real glacier, 360° Alps panorama. Eat your packed lunch at the top. Last cable car down ~4:45pm.</p>
+        <div class="tip"><strong>Budget alternative (save ~€40):</strong> Walk or take the bus to the Kaprun reservoir (Stausee) — a free alpine walk to a dramatic high-mountain dam. Great scenery, zero cost.</div>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">3:30 pm</div>
+      <div>
+        <div class="act-title">Train to Bruck — Expo &amp; Bib Pickup <span class="pill cheap">€1.50</span></div>
+        <p class="act-desc"><span class="pill you">YOU</span> Collect your bib at the race office.<br>
+        <span class="pill friends">FRIENDS</span> Go to the <strong>Merchandisezelt</strong> next to the race office for Besucherbus tickets.</p>
+        <div class="warn-box"><strong>⚠️ Critical:</strong> Only <strong>244 Besucherbus tickets</strong>. €25/person. On sale Sat 10:00–19:00. Don't leave it past 5pm.</div>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">7:30 pm</div>
+      <div>
+        <div class="act-title">Dinner — pasta carb-load <span class="pill cheap">€0–15</span></div>
+        <p class="act-desc">Pension kitchen + Hofer pasta = €3. Otherwise Christian's Gasthaus. Train back from Bruck is 5 min. Early night — race starts at 7am.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SUNDAY ═══ -->
+<section class="day-section">
+  <div class="day-header">
+    <div class="day-num">03</div>
+    <div class="day-title-block">
+      <p class="day-label">Sunday, June 8 &nbsp;·&nbsp; Race Day</p>
+      <h2 class="day-title">The <em>Glocknerkönig</em></h2>
+    </div>
+  </div>
+
+  <div class="photo-grid">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Grossglockner_Hochalpenstrasse_2.jpg/1280px-Grossglockner_Hochalpenstrasse_2.jpg" alt="Grossglockner Hochalpenstrasse alpine road" loading="lazy">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Pasterze_Glacier_2019.jpg/800px-Pasterze_Glacier_2019.jpg" alt="Pasterze glacier Grossglockner" loading="lazy">
+  </div>
+
+  <div class="activities">
+    <div class="activity">
+      <div class="act-time">5:45 am</div>
+      <div>
+        <div class="act-title">Early train to Bruck <span class="pill cheap">€1.50</span></div>
+        <p class="act-desc">Everyone takes the first ÖBB train from Zell am See to Bruck-Fusch. 5 min. Check first Sunday morning departure on oebb.at — aim to be in Bruck by 6:10am.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">6:15 am</div>
+      <div>
+        <div class="act-title"><span class="pill friends">FRIENDS</span> Board Besucherbus at Maximarkt</div>
+        <p class="act-desc">Bus departs <strong>Maximarkt Bruck 6:15am</strong> → Bahnhofstraße 6:30–6:40 → Fusch 6:45 → Ferleiten 6:55. Direct to finish area at Fuscher Törl (2,428m). Return from 10:30am, last bus 12:00pm.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">7:00 am</div>
+      <div>
+        <div class="act-title"><span class="pill you">YOU</span> Race start — Dorfplatz Bruck</div>
+        <p class="act-desc"><strong>27.3 km &nbsp;·&nbsp; 1,672 vertical metres &nbsp;·&nbsp; max 12%</strong><br>
+        Bruck (756m) → Fusch → Ferleiten (1,145m) → Fuscher Törl (2,428m).<br>
+        Refreshment at Piffkar restaurant, km 19.2. Sprint classification Bruck → Ferleiten.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">~8:30–9:30 am</div>
+      <div>
+        <div class="act-title"><span class="pill friends">FRIENDS</span> Cheer you across the finish at 2,428m</div>
+        <p class="act-desc">Friends are already at the top when you arrive. Café at Fuscher Törl for a hot drink. First bus back down at 10:30am.</p>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">After 10:30 am</div>
+      <div>
+        <div class="act-title">Sunday afternoon</div>
+        <div class="options">
+          <div class="option"><span class="option-lbl">Option A — Kaiser-Franz-Josefs-Höhe hike:</span> Once the road opens at 10:30am, hitch a ride up with race visitors to KFJ-Höhe (2,369m). Walk the <strong>Gamsgrubenweg</strong> trail above the Pasterze glacier. Marmots everywhere. Free once up there.</div>
+          <div class="option"><span class="option-lbl">Option B — Lake afternoon (free):</span> Train back to Zell am See, swim at the Strandbad. After a 5am start, sometimes a quiet lake afternoon is the right call.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity">
+      <div class="act-time">2:00 pm</div>
+      <div>
+        <div class="act-title">Celebration meal — Christian's Gasthaus <span class="pill cheap">~€15</span></div>
+        <p class="act-desc">Open Sundays from 2pm. Schnitzel, Tafelspitz, Kaiserschmarrn for dessert. The right place to end the weekend.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PHOTO GALLERY ═══ -->
+<section class="gallery-section">
+  <h2>The Places</h2>
+  <p class="sub">A visual overview of the weekend</p>
+  <div class="gallery-grid">
+    <div class="gallery-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Zell_am_See_Panorama.jpg/800px-Zell_am_See_Panorama.jpg" alt="Zell am See" loading="lazy">
+      <div class="g-cap">Zell am See · Lake &amp; town</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Kaprun_Sigmund_Thun_Klamm.jpg/800px-Kaprun_Sigmund_Thun_Klamm.jpg" alt="Sigmund Thun Klamm" loading="lazy">
+      <div class="g-cap">Sigmund-Thun-Klamm · Sat morning</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Kitzsteinhorn_3203m.jpg/800px-Kitzsteinhorn_3203m.jpg" alt="Kitzsteinhorn" loading="lazy">
+      <div class="g-cap">Kitzsteinhorn · 3,029m · Sat afternoon</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Grossglockner_Hochalpenstrasse_2.jpg/800px-Grossglockner_Hochalpenstrasse_2.jpg" alt="Grossglockner Hochalpenstrasse" loading="lazy">
+      <div class="g-cap">Hochalpenstrasse · Race route Sun</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Pasterze_Glacier_2019.jpg/800px-Pasterze_Glacier_2019.jpg" alt="Pasterze Glacier" loading="lazy">
+      <div class="g-cap">Pasterze Glacier · Sun afternoon hike</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/ZellAmSee_UferPromenade_GrandHotel.JPG/800px-ZellAmSee_UferPromenade_GrandHotel.JPG" alt="Zell am See promenade" loading="lazy">
+      <div class="g-cap">Elisabeth-Promenade · Fri evening</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ COST TABLE ═══ -->
+<section class="cost-section">
+  <h2>Full Cost Breakdown</h2>
+  <p class="sub">Per person · Friends also pay +€25 for the Besucherbus</p>
+  <table class="cost-table">
+    <tr><td>🚆 Train Vienna → Zell am See (return) <span class="note">Book early on oebb.at for best price</span></td><td>~€60</td></tr>
+    <tr><td>🏠 Pension Buchner — 2 nights <span class="note">Book ahead, fills up on race weekend</span></td><td>~€90</td></tr>
+    <tr><td>🏔️ Kitzsteinhorn cable car (return) <span class="note">The big splurge. Skip for free Kaprun dam walk to save €40</span></td><td>~€40</td></tr>
+    <tr><td>🛶 Lake boat tour <span class="note">Optional — replace with free lake walk</span></td><td>~€12</td></tr>
+    <tr><td>🪨 Sigmund-Thun-Klamm gorge entry</td><td>~€5</td></tr>
+    <tr><td>🚌 Bus 660 Zell am See → Kaprun / Kitzsteinhorn</td><td>~€5</td></tr>
+    <tr><td>🚆 Trains Zell am See ↔ Bruck (×3 trips)</td><td>~€5</td></tr>
+    <tr><td>🍎 Food — Hofer breakfasts &amp; packed lunches (3 days) <span class="note">Avoid cafés on the promenade</span></td><td>~€20</td></tr>
+    <tr><td>🍽️ Dinners — Christian's Gasthaus (2–3 meals)</td><td>~€35</td></tr>
+    <tr class="total-row"><td>Total per person <span class="note">Free: lake swim, promenade, old town, expo, marmot spotting. Friends add €25 for Besucherbus.</span></td><td>~€272</td></tr>
+  </table>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <p>Verify train times at oebb.at &nbsp;·&nbsp; Kitzsteinhorn summer timetable differs from winter &nbsp;·&nbsp; Besucherbus tickets: Merchandisezelt Dorfplatz Bruck, Sat 10:00–19:00, only 244 available &nbsp;·&nbsp; Photos: Wikimedia Commons (CC)</p>
+  <p>Zell am See-Kaprun &nbsp;·&nbsp; June 2026</p>
+</footer>
+
+</body>
+</html>
