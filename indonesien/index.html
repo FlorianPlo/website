@@ -125,6 +125,7 @@
   .dot-friend1 { background: var(--friend1); }
   .dot-friend2 { background: var(--friend2); }
   .dot-all { background: var(--all); }
+  .dot-all-travellers { background: var(--sand); }
 
   /* MAIN LAYOUT */
   .main {
@@ -169,6 +170,9 @@
     text-align: center;
   }
   .track-name:first-child { text-align: left; }
+  .track-name.florian { color: var(--florian); opacity: 0.7; }
+  .track-name.friend2  { color: var(--friend2);  opacity: 0.7; }
+  .track-name.friend1  { color: var(--friend1);  opacity: 0.7; }
 
   .track-row {
     display: grid;
@@ -430,7 +434,7 @@
 <div class="legend fade-in">
   <span class="legend-label">Filter by</span>
   <div class="legend-item active" data-filter="all" onclick="setFilter('all')">
-    <div class="legend-dot" style="background:var(--sand)"></div>
+    <div class="legend-dot dot-all-travellers"></div>
     All travellers
   </div>
   <div class="legend-item" data-filter="florian" onclick="setFilter('florian')">
@@ -455,9 +459,9 @@
     <div class="timeline-tracks">
       <div class="track-header">
         <div class="track-name"></div>
-        <div class="track-name" style="color:var(--florian);opacity:0.7">Florian</div>
-        <div class="track-name" style="color:var(--friend2);opacity:0.7">Friend 2</div>
-        <div class="track-name" style="color:var(--friend1);opacity:0.7">Friend 1</div>
+        <div class="track-name florian">Florian</div>
+        <div class="track-name friend2">Friend 2</div>
+        <div class="track-name friend1">Friend 1</div>
       </div>
 
       <!-- Aug 1–7: Florian solo Java -->
