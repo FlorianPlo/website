@@ -1203,6 +1203,18 @@ def plot_crystallisation(accuracies, aucs):
       <strong>15/20</strong> · src-arxiv-2507.09709 · Saglam et al. (Yale + Foundation AI / Cisco) · Jul 2025 (IJCNLP 2025) · <em>LLMs Encode Semantics and Alignment in Linearly Separable Representations</em> · 11 LLMs: high-level semantics live in low-dim subspaces; <strong>linear separability becomes more pronounced in deeper layers</strong> — general-prior for the RQ1 crystallisation shape; final-layer MLP probe used as a latent guardrail · <a href="https://arxiv.org/abs/2507.09709" target="_blank">arXiv:2507.09709</a> · <a href="https://aclanthology.org/2025.ijcnlp-long.124/" target="_blank">ACL</a>
     </p>
 
+    <h2>Iteration #11 — 2026-06-12</h2>
+    <p style="line-height:1.9">
+      <strong>15/20</strong> · src-arxiv-2605.28553 · May 2026 · <em>Refusal Before Decoding</em> · refusal linearly decodable from intermediate residual stream well before final layer across <strong>Llama-3.2-3B-Instruct, Qwen3Guard-Gen-4B, Qwen-3.6-27B</strong> — multi-family support for RQ1 depth-monotonic separability; residual-stream choice survives third-family test · <a href="https://arxiv.org/abs/2605.28553" target="_blank">arXiv:2605.28553</a><br>
+      <strong>14/20</strong> · src-arxiv-2603.18280 · Frank · Mar 2026 · <em>Detection Is Cheap, Routing Is Learned</em> · proposes <strong>detect → route → generate</strong> three-stage framework; argues refusal-detection probes (= RQ1) measure the trivial stage and that alignment "actually operates" at the routing stage — Ch 5 framing extension · <a href="https://arxiv.org/abs/2603.18280" target="_blank">arXiv:2603.18280</a><br>
+      <strong>13/20</strong> · src-arxiv-2603.27412 · Llorente-Saguer · Mar 2026 · <em>The Geometry of Harmful Intent (LatentBiopsy)</em> · training-free angular-deviation detection in residual stream; harmful prompts cluster in σ_θ ≈ 0.03 rad (10× tighter than normative); <strong>angular signature survives abliteration</strong> — methodology contrast + Ch 5 ablation-survival finding · <a href="https://arxiv.org/abs/2603.27412" target="_blank">arXiv:2603.27412</a>
+    </p>
+
+    <div class="callout">
+      <div class="callout-title">📐 Title-collision tally — "Geometry of ..." family now at 4 papers</div>
+      <p>The "Geometry of ..." framing is now a recognisable cluster in the refusal-interpretability literature: <strong>Wollschlager et al. (2502.17420)</strong> "Geometry of <em>Refusal</em>: Concept Cones"; <strong>Death by a Thousand Directions (2507.21141)</strong> "Geometry of <em>Harmfulness</em> through Subconcept Probing" on Llama-3.1-8B-Instruct; <strong>Llorente-Saguer (2603.27412)</strong> "Geometry of <em>Harmful Intent</em>: Angular Deviation"; and the thesis itself: "Geometry of <em>No</em>: Probing Refusal Representations Across Transformer Layers". The cite-and-distinguish in Ch 2 (decisions-needed #3 → Option 1) now spans four entries — the thesis's load-bearing differentiator remains the explicit <em>layer-resolved</em> view across the layer × position × probe axes.</p>
+    </div>
+
     <h2>Iteration #10 — 2026-06-12 (meta-review iter)</h2>
     <p style="line-height:1.9">
       <strong>20/20</strong> · src-arxiv-2507.21141 · <em>Death by a Thousand Directions: Geometry of Harmfulness through Subconcept Probing</em> · Jul 2025 · <strong>55 linear probes on LLaMA-3.1-8B-Instruct</strong> for 55 harmfulness subconcepts → low-rank subspace; dominant-direction steering near-eliminates harmfulness; attention output beats residual stream on most metrics — direct race to RQ3 on the exact model; raises probing-target methodology question · ⚠ decisions-needed #9 · <a href="https://arxiv.org/abs/2507.21141" target="_blank">arXiv:2507.21141</a><br>
