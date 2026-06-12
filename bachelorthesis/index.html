@@ -1196,6 +1196,18 @@ def plot_crystallisation(accuracies, aucs):
       <strong>12/20</strong> · src-arxiv-2603.11388 · Xue et al. · Mar 2026 · <em>Deactivating Refusal Triggers</em> · over-refusal driven by semantic proximity between benign queries and learned refusal triggers — behavioural + hidden-state evidence; Ch 5 causality citation · <a href="https://arxiv.org/abs/2603.11388" target="_blank">arXiv:2603.11388</a>
     </p>
 
+    <h2>Iteration #9 — 2026-06-12</h2>
+    <p style="line-height:1.9">
+      <strong>18/20</strong> · src-arxiv-2604.13386 · Nordby, Pais, Parrack · Apr 2026 · <em>Linear Probe Accuracy Scales with Model Size &amp; Benefits from Multi-Layer Ensembling</em> · 12 models 0.5B–176B: ~5% AUROC per 10× params; <strong>deception directions rotate gradually across layers</strong>, single-layer probes brittle, multi-layer ensembling recovers performance — sharpens RQ1 "crystallisation point vs. profile" framing · ⚠ decisions-needed #8 · <a href="https://arxiv.org/abs/2604.13386" target="_blank">arXiv:2604.13386</a><br>
+      <strong>15/20</strong> · src-arxiv-2505.23556 · Yeo, Prakash, Neo, Lee, Cambria, Satapathy · May 2025 (EMNLP 2025 Findings) · <em>Understanding Refusal in LMs with Sparse Autoencoders</em> · SAE features causally mediate refusal; refusal features improve OOD generalisation of downstream linear probes; feature steering improves jailbreak robustness but degrades general capability — Ch 2 methodology contrast + Ch 5 entanglement caveat · <a href="https://arxiv.org/abs/2505.23556" target="_blank">arXiv:2505.23556</a> · <a href="https://aclanthology.org/2025.findings-emnlp.338/" target="_blank">ACL</a><br>
+      <strong>15/20</strong> · src-arxiv-2507.09709 · Saglam et al. (Yale + Foundation AI / Cisco) · Jul 2025 (IJCNLP 2025) · <em>LLMs Encode Semantics and Alignment in Linearly Separable Representations</em> · 11 LLMs: high-level semantics live in low-dim subspaces; <strong>linear separability becomes more pronounced in deeper layers</strong> — general-prior for the RQ1 crystallisation shape; final-layer MLP probe used as a latent guardrail · <a href="https://arxiv.org/abs/2507.09709" target="_blank">arXiv:2507.09709</a> · <a href="https://aclanthology.org/2025.ijcnlp-long.124/" target="_blank">ACL</a>
+    </p>
+
+    <div class="callout">
+      <div class="callout-title">🔁 Methodology contrast — does refusal crystallise, or rotate?</div>
+      <p>Nordby et al. (2604.13386) find that <strong>deception</strong> directions <em>rotate gradually across layers</em> in 12 LLMs — single-layer probes brittle, multi-layer ensemble probes recover performance. This is the empirical opposite of the "crystallisation point" RQ1 predicts for <strong>refusal</strong>. Two possibilities, both informative: (a) refusal crystallises at a band (RQ1 confirmed, contrasts with deception); (b) refusal also rotates (RQ1 must reframe to "crystallisation profile"). Decisions-needed #8 records the Ch 1 / Ch 3 / Ch 5 implications.</p>
+    </div>
+
     <h3>Layer-16-band convergence — running tally (as of iter #7)</h3>
     <p style="line-height:1.8">
       Independent layer reference points for the Llama-8B family clustering in the <strong>11–20 band</strong>:<br>
