@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Refusal Interpretability — Deep Knowledge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+<!-- MathJax 3 — renders $$ and $ delimiters, skips code/pre blocks -->
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$']],
+    displayMath: [['$$', '$$']],
+    packages: {'[+]': ['ams']}
+  },
+  options: {
+    skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+  },
+  startup: {
+    typeset: true
+  }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1e2535;
+    --border: #2a3245;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent3: #c7d2fe;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --orange: #fb923c;
+    --pink: #f472b6;
+    --sidebar-w: 280px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-logo h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .sidebar-logo p {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .nav-group { margin-bottom: 4px; }
+
+  .nav-group-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--text3);
+    padding: 8px 20px 4px;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 6px 20px;
+    font-size: 13px;
+    color: var(--text2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+
+  .nav-link:hover { color: var(--text); background: var(--bg3); }
+  .nav-link.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(99,102,241,.08); }
+
+  .nav-sub {
+    display: block;
+    padding: 4px 20px 4px 32px;
+    font-size: 12px;
+    color: var(--text3);
+    text-decoration: none;
+    transition: color .15s;
+  }
+
+  .nav-sub:hover { color: var(--text2); }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    max-width: 900px;
+    padding: 48px 56px;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 80px;
+    scroll-margin-top: 32px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  h1 { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+  h2 { font-size: 22px; font-weight: 600; margin: 48px 0 16px; color: var(--text); }
+  h3 { font-size: 17px; font-weight: 600; margin: 32px 0 12px; color: var(--text); }
+  h4 { font-size: 14px; font-weight: 600; margin: 24px 0 8px; color: var(--accent3); text-transform: uppercase; letter-spacing: .06em; }
+
+  p { margin-bottom: 14px; color: var(--text2); }
+  p strong { color: var(--text); font-weight: 600; }
+
+  /* ── CALLOUTS ── */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-left: 3px solid;
+    font-size: 14px;
+  }
+
+  .callout p { margin: 0; }
+  .callout p + p { margin-top: 8px; }
+
+  .callout.key { background: rgba(99,102,241,.1); border-color: var(--accent); }
+  .callout.key .callout-title { color: var(--accent2); font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+
+  .callout.warn { background: rgba(251,191,36,.08); border-color: var(--yellow); }
+  .callout.warn .callout-title { color: var(--yellow); font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+
+  .callout.good { background: rgba(52,211,153,.08); border-color: var(--green); }
+  .callout.good .callout-title { color: var(--green); font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+
+  .callout.paper { background: rgba(244,114,182,.08); border-color: var(--pink); }
+  .callout.paper .callout-title { color: var(--pink); font-weight: 600; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+
+  /* ── CODE ── */
+  pre { margin: 20px 0; border-radius: 8px; font-size: 13px; overflow-x: auto; border: 1px solid var(--border); }
+  code.inline { font-family: 'JetBrains Mono', monospace; background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--accent3); }
+
+  /* ── MATH BLOCK ── */
+  /* White-space is NOT pre here — MathJax renders the $$ content */
+  .math {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin: 16px 0;
+    overflow-x: auto;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .math .note {
+    text-align: left;
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* ── DIAGRAM (ASCII art — stays monospace) ── */
+  .diagram {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+  }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+  th { background: var(--bg3); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--text); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── TAGS ── */
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-right: 6px; }
+
+  /* ── GRID ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h4 { margin-top: 0; }
+
+  /* ── STEPS ── */
+  .steps { list-style: none; counter-reset: step; margin: 16px 0; }
+  .steps li { counter-increment: step; padding: 12px 16px 12px 52px; position: relative; border-left: 1px solid var(--border); margin-left: 20px; margin-bottom: 4px; font-size: 14px; color: var(--text2); }
+  .steps li::before { content: counter(step); position: absolute; left: -20px; top: 10px; width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; }
+
+  /* ── HERO ── */
+  .hero { padding: 0 0 48px; border-bottom: 1px solid var(--border); margin-bottom: 64px; }
+  .hero .badge { display: inline-block; background: rgba(99,102,241,.15); color: var(--accent2); border: 1px solid rgba(99,102,241,.3); border-radius: 6px; font-size: 12px; font-weight: 600; padding: 4px 12px; margin-bottom: 20px; }
+  .hero h1 { font-size: 36px; background: linear-gradient(135deg, #e2e8f0, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero p { font-size: 16px; color: var(--text2); max-width: 600px; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 24px 20px; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h2>Thesis Reference</h2>
+    <p>LLM Refusal Interpretability</p>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Foundation</span>
+    <a class="nav-link" href="#transformers">Transformer Architecture</a>
+    <a class="nav-sub" href="#residual-stream">Residual Stream</a>
+    <a class="nav-sub" href="#attention">Attention Mechanism</a>
+    <a class="nav-sub" href="#mlp">MLP Layers</a>
+    <a class="nav-sub" href="#llama-specifics">Llama-3-8B Specifics</a>
+    <a class="nav-link" href="#generation">How LLMs Generate Text</a>
+    <a class="nav-link" href="#safety-training">Safety Training</a>
+    <a class="nav-sub" href="#rlhf">RLHF</a>
+    <a class="nav-sub" href="#dpo">DPO</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Refusal</span>
+    <a class="nav-link" href="#refusal-mechanism">Refusal Mechanism</a>
+    <a class="nav-sub" href="#refusal-direction">Refusal Direction (Arditi)</a>
+    <a class="nav-sub" href="#safeswitch">SafeSwitch (Zhao)</a>
+    <a class="nav-sub" href="#geometry">Geometry (Wollschlager)</a>
+    <a class="nav-link" href="#jailbreaks">Jailbreaks</a>
+    <a class="nav-sub" href="#gcg">GCG Attacks</a>
+    <a class="nav-sub" href="#natural-jailbreaks">Natural Jailbreaks</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Your Method</span>
+    <a class="nav-link" href="#probing">Linear Probing</a>
+    <a class="nav-sub" href="#probe-theory">Theory</a>
+    <a class="nav-sub" href="#probe-code">Implementation</a>
+    <a class="nav-link" href="#crystallisation">Crystallisation</a>
+    <a class="nav-link" href="#datasets">Datasets</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Papers</span>
+    <a class="nav-link" href="#papers">Key Papers</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Living Research</span>
+    <a class="nav-link" href="#sources">Sources Index</a>
+  </div>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="badge">Bachelor Thesis · Llama-3-8B</div>
+    <h1>LLM Refusal Interpretability<br>Deep Knowledge Guide</h1>
+    <p>Everything you need to understand — from how transformers work at the weight level to how refusal crystallises across layers and why jailbreaks sometimes bypass it.</p>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SECTION 1: TRANSFORMER ARCHITECTURE
+  ══════════════════════════════════ -->
+  <section class="section" id="transformers">
+    <div class="section-label">Section 01</div>
+    <h1>Transformer Architecture</h1>
+    <p>To understand why refusal can be detected with linear probes at specific layers, you need a precise mental model of how information flows through a transformer. Not the high-level "it has attention" picture — the actual mechanics.</p>
+
+    <h2 id="residual-stream">The Residual Stream</h2>
+    <p>The single most important concept for your thesis. A transformer does not process tokens by passing them through sequential black boxes. Instead, there is one persistent vector per token position that <strong>accumulates</strong> information across all layers. This is called the <strong>residual stream</strong>.</p>
+
+    <div class="diagram">Input tokens: ["How", "do", "I", "make", "a", "bomb", "?"]
+
+Each token → embedding → vector h ∈ ℝ^4096
+                                    ↓
+┌─────────────────────────────────────────────────────┐
+│                  RESIDUAL STREAM                      │
+│                                                       │
+│  h⁰  ──────────────────────────────────────────→    │
+│       ↕ Attn₀   ↕ MLP₀                              │
+│  h¹  ──────────────────────────────────────────→    │
+│       ↕ Attn₁   ↕ MLP₁                              │
+│  ...                                                  │
+│  h³¹ ──────────────────────────────────────────→    │
+│                                                       │
+│  → final h³² → unembed → logits over vocabulary      │
+└─────────────────────────────────────────────────────┘</div>
+
+    <p>The key equation for each layer $l$. Each layer does not <em>replace</em> the vector — it <em>adds a delta</em> to it:</p>
+
+    <div class="math">
+      $$h^{(l+1)} = \underbrace{h^{l}}_{\text{residual (unchanged)}}
+      + \underbrace{\text{Attn}^{l}\!\left(\text{LN}(h^{l})\right)}_{\text{attention adds to stream}}
+      + \underbrace{\text{MLP}^{l}\!\left(\text{LN}\!\left(h^{l} + \text{Attn}^{l}(\cdots)\right)\right)}_{\text{MLP adds to updated stream}}$$
+      <p class="note">LN = layer normalisation (RMSNorm in Llama-3). Each layer contributes an additive update; the original $h^l$ is always preserved in the sum.</p>
+    </div>
+
+    <p>This is called a <strong>residual connection</strong>. The residual stream at layer 20 is literally the sum of everything all 20 previous attention and MLP layers contributed.</p>
+
+    <div class="callout key">
+      <div class="callout-title">Why this matters for your thesis</div>
+      <p>When you train a linear probe on $h^l$, you are asking: "by layer $l$, has enough information accumulated in the stream that a linear classifier can detect refusal?" The layer where the answer switches from No to Yes is the crystallisation point. The residual structure is precisely why this question is well-defined — the stream at each layer is a coherent, interpretable object.</p>
+    </div>
+
+    <h3>What lives in the residual stream?</h3>
+    <p>Think of the residual stream as a high-dimensional blackboard (4096 dimensions for Llama-3-8B). Different "features" are written to different dimensions or directions. The <strong>linear representation hypothesis</strong> (Elhage et al. 2022) states that neural networks tend to encode concepts as linear directions in this space. This means:</p>
+    <ul style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
+      <li style="margin-bottom:8px;">"This is a harmful request" might be encoded as a specific direction $\mathbf{v} \in \mathbb{R}^{4096}$</li>
+      <li style="margin-bottom:8px;">The model "writes" to this direction by adding a component along $\mathbf{v}$ to the stream</li>
+      <li style="margin-bottom:8px;">A linear probe learns to detect the presence of this component</li>
+      <li style="margin-bottom:8px;">High probe accuracy = the direction is strongly present at that layer</li>
+    </ul>
+
+    <h2 id="attention">Attention Mechanism</h2>
+    <p>Attention lets each token position "read from" other token positions. This is how the model understands context — the word "bomb" in position 5 can be influenced by "how do I make" in positions 0–3.</p>
+
+    <h3>Scaled dot-product attention</h3>
+    <p>Given input $X \in \mathbb{R}^{T \times d}$ (T tokens, d dimensions), a single attention head computes:</p>
+
+    <div class="math">
+      $$\begin{aligned}
+      Q &= X W_Q \qquad & &\text{(Queries: what am I looking for?)} \\
+      K &= X W_K \qquad & &\text{(Keys: what do I offer?)} \\
+      V &= X W_V \qquad & &\text{(Values: what do I pass on?)} \\[1em]
+      A &= \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_{\text{head}}}}\right) \in \mathbb{R}^{T \times T} \qquad & &\text{(attention weights)} \\[0.5em]
+      O &= AV \in \mathbb{R}^{T \times d_{\text{head}}} \qquad & &\text{(output)}
+      \end{aligned}$$
+      <p class="note">Each row of $A$ is a probability distribution over token positions: how much does token $i$ attend to token $j$? The $1/\sqrt{d_\text{head}}$ scaling prevents the dot products from becoming too large in high dimensions.</p>
+    </div>
+
+    <p>Different heads specialise. In safety-trained models, some heads have been identified as "refusal heads" — their output strongly projects onto the refusal direction in the residual stream.</p>
+
+    <h3>Multi-head attention</h3>
+    <p>Llama-3-8B has <strong>32 attention heads</strong> per layer, each with $d_\text{head} = 128$ dimensions. They run in parallel and are concatenated:</p>
+
+    <div class="math">
+      $$\begin{aligned}
+      \text{MultiHead}(X) &= \text{Concat}(\text{head}_1, \ldots, \text{head}_{32})\, W_O \\[0.6em]
+      \text{where} \quad \text{head}_i &= \text{softmax}\!\left(\frac{Q_i K_i^\top}{\sqrt{128}}\right) V_i \\[0.6em]
+      W_O &\in \mathbb{R}^{4096 \times 4096} \quad \text{(output projection back to model dim)}
+      \end{aligned}$$
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-title">Gotcha with TransformerLens</div>
+      <p>Llama-3-8B uses <strong>Grouped Query Attention (GQA)</strong>: 32 query heads but only 8 key/value heads. Every 4 query heads share one KV head. This is an efficiency trick but does not affect residual stream probing — <code class="inline">hook_resid_post</code> always gives you the full 4096-dim stream regardless.</p>
+    </div>
+
+    <h2 id="mlp">MLP Layers</h2>
+    <p>After attention, each layer applies a position-wise feedforward network. Llama-3 uses <strong>SwiGLU</strong> gating:</p>
+
+    <div class="math">
+      $$\begin{aligned}
+      \text{MLP}(x) &= \Big(\sigma(W_{\text{gate}}\, x) \odot (W_{\text{up}}\, x)\Big)\, W_{\text{down}} \\[0.8em]
+      W_{\text{gate}},\, W_{\text{up}} &\in \mathbb{R}^{14336 \times 4096} \quad \text{(gate and up projections)} \\
+      W_{\text{down}} &\in \mathbb{R}^{4096 \times 14336} \quad \text{(down projection back to model dim)}
+      \end{aligned}$$
+      <p class="note">$\odot$ is element-wise (Hadamard) multiplication. The sigmoid gate $\sigma$ controls which of the 14336 "neurons" activate. Each active neuron writes its stored direction (a row of $W_\text{down}$) into the residual stream.</p>
+    </div>
+
+    <h3>Why MLPs matter for refusal</h3>
+    <p>MLPs can both <em>write</em> refusal features to the stream and <em>suppress</em> other features. When a refusal-relevant MLP neuron fires, it adds its stored direction (a row of $W_\text{down}$) to the residual stream. This is how the refusal direction accumulates across layers — it is written incrementally by specific MLP neurons.</p>
+
+    <h2 id="llama-specifics">Llama-3-8B Architecture Details</h2>
+
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+      <tr><td>Layers (transformer blocks)</td><td>32</td><td>Each has one Attn + one MLP</td></tr>
+      <tr><td>Model dimension ($d_\text{model}$)</td><td>4096</td><td>Size of residual stream vector</td></tr>
+      <tr><td>Attention heads (Q)</td><td>32</td><td>Head dim = 128</td></tr>
+      <tr><td>KV heads (GQA)</td><td>8</td><td>4 Q heads share 1 KV head</td></tr>
+      <tr><td>MLP intermediate dim</td><td>14336</td><td>SwiGLU with 3 projection matrices</td></tr>
+      <tr><td>Vocab size</td><td>128,256</td><td>Tiktoken-based BPE</td></tr>
+      <tr><td>Max context length</td><td>8192 tokens</td><td>RoPE positional encoding</td></tr>
+      <tr><td>Normalisation</td><td>RMSNorm</td><td>Applied before each sub-layer</td></tr>
+      <tr><td>Parameters</td><td>~8B</td><td>~16 GB in bfloat16</td></tr>
+    </table>
+
+    <h3>RMSNorm (not LayerNorm)</h3>
+    <p>Llama-3 uses <strong>Root Mean Square Normalisation</strong> — it does not subtract the mean, only normalises by the RMS:</p>
+
+    <div class="math">
+      $$\begin{aligned}
+      \text{RMSNorm}(x) &= \frac{x}{\text{RMS}(x)} \cdot \gamma \\[0.8em]
+      \text{RMS}(x) &= \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2} \qquad \gamma \in \mathbb{R}^d \text{ (learned scale)}
+      \end{aligned}$$
+      <p class="note">The raw residual stream vectors (which you probe) are <em>not</em> RMSNorm-normalised — normalisation only applies inside attention/MLP. You should mean-centre activations manually before training probes.</p>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 2: HOW LLMS GENERATE
+  ══════════════════════════════════ -->
+  <section class="section" id="generation">
+    <div class="section-label">Section 02</div>
+    <h1>How LLMs Generate Text</h1>
+    <p>Understanding generation is necessary to understand where in the process refusal happens and what "refusal" even means at the mechanistic level.</p>
+
+    <h2>Autoregressive generation</h2>
+    <p>LLMs generate one token at a time. At each step, the model takes the full context (prompt + tokens generated so far) and outputs a probability distribution over the vocabulary. The next token is sampled from this distribution.</p>
+
+    <div class="diagram">Prompt: "How do I make a bomb?"
+
+Step 1: Model reads full prompt → produces distribution over 128k tokens
+        P("I") = 0.001,  P("Sure") = 0.002,  P("I'm") = 0.34 ...
+        → sample "I"
+
+Step 2: Context is now "How do I make a bomb? I"
+        → produces new distribution → sample "can't"
+
+Step 3: "How do I make a bomb? I can't" → ...
+
+Final output: "I can't help with that."</div>
+
+    <h2>The unembedding step</h2>
+    <p>After the last transformer layer, the residual stream vector at the last token position is projected to logits over the vocabulary:</p>
+
+    <div class="math">
+      $$\begin{aligned}
+      \text{logits} &= W_U \cdot h^{32} \in \mathbb{R}^{128256} \\[0.5em]
+      P(\text{token}_i) &= \text{softmax}(\text{logits})_i \\[0.5em]
+      W_U &\in \mathbb{R}^{128256 \times 4096} \quad \text{(unembedding matrix)}
+      \end{aligned}$$
+      <p class="note">The token with the highest probability becomes the first output token. For a refused prompt, tokens like "I", "Sorry", "I'm" have high probability; tokens beginning harmful instructions do not.</p>
+    </div>
+
+    <div class="callout key">
+      <div class="callout-title">Key insight</div>
+      <p>Refusal is not a hard block — it is a <strong>high logit on certain tokens</strong>. The refusal direction in the residual stream is a direction that, when present in $h^{32}$, increases logits for "I can't" and decreases logits for "Sure, here's how." This is the mechanistic link between the latent refusal representation and the observed refusal behaviour.</p>
+    </div>
+
+    <h2>Why the last token position matters</h2>
+    <p>When processing a prompt, all $T$ tokens are processed in parallel (one forward pass). But to generate the <em>first output token</em>, only the residual stream at the <strong>last token position</strong> is unembedded. This position "sees" the full context via attention and decides what comes next — it is the decision point. For your probes, you always extract activations at this position.</p>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 3: SAFETY TRAINING
+  ══════════════════════════════════ -->
+  <section class="section" id="safety-training">
+    <div class="section-label">Section 03</div>
+    <h1>Safety Training</h1>
+    <p>Llama-3-8B-Instruct was trained in stages. Understanding which stage produces refusal behaviour is important for knowing what you are studying.</p>
+
+    <h2>Training pipeline overview</h2>
+
+    <div class="diagram">Stage 1: PRETRAINING
+  Train on ~15 trillion tokens of internet text
+  Model learns: language, facts, reasoning, syntax
+  No safety preferences — the model will generate anything
+
+Stage 2: SUPERVISED FINE-TUNING (SFT)
+  Train on curated instruction-following examples
+  Includes some refusal examples ("How to make a bomb?" → "I can't help...")
+  Model learns the FORMAT of helpful+safe responses
+
+Stage 3: RLHF / DPO
+  Human preferences: rank (safe response) > (harmful response)
+  Model parameters adjusted to increase P(safe) relative to P(harmful)
+  This is where most of the safety behaviour is encoded into the weights
+
+Stage 4: Red-teaming + targeted SFT
+  Identify remaining failure modes, patch with more SFT
+  Iterative process</div>
+
+    <h2 id="rlhf">RLHF — Reinforcement Learning from Human Feedback</h2>
+    <p>RLHF is the original method to align LLMs with human preferences. It has three sub-stages:</p>
+
+    <ol class="steps">
+      <li><strong>Collect preference data:</strong> Human annotators compare pairs of model outputs (A vs B) and say which is better. For safety, "I can't help" &gt; "Here's how to make a bomb."</li>
+      <li><strong>Train a reward model:</strong> A separate neural network learns to predict which output humans prefer and scores any (prompt, response) pair.</li>
+      <li><strong>Fine-tune with PPO:</strong> Use the reward model as a signal to update the main LLM via Proximal Policy Optimisation. The LLM learns to generate responses that score highly.</li>
+    </ol>
+
+    <div class="callout warn">
+      <div class="callout-title">Why RLHF creates mechanistic refusal structure</div>
+      <p>RLHF does not add a rule-based filter. It changes the model's weights so that, when processing a harmful prompt, the internal computation produces activations that lead to high probability of refusal tokens. This is why the refusal signal lives in the residual stream and can be studied with probes — it is a genuine geometric property of activation space, not an external classifier.</p>
+    </div>
+
+    <h2 id="dpo">DPO — Direct Preference Optimisation</h2>
+    <p>DPO (Rafailov et al. 2023) is a simpler alternative to RLHF that Llama-3 uses. It optimises directly on preference data without training a separate reward model:</p>
+
+    <div class="math">
+      $$\mathcal{L}_{\text{DPO}} = -\log \sigma\!\left(\beta \log \frac{\pi_\theta(y_{\text{win}} \mid x)}{\pi_{\text{ref}}(y_{\text{win}} \mid x)} - \beta \log \frac{\pi_\theta(y_{\text{lose}} \mid x)}{\pi_{\text{ref}}(y_{\text{lose}} \mid x)}\right)$$
+      <p class="note">$y_\text{win}$ = preferred (safe) response, $y_\text{lose}$ = dispreferred (harmful) response, $\beta$ controls how far the model deviates from the reference (pre-RLHF) policy $\pi_\text{ref}$. The objective pushes up the probability of $y_\text{win}$ and down the probability of $y_\text{lose}$, relative to the reference model.</p>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 4: REFUSAL MECHANISMS
+  ══════════════════════════════════ -->
+  <section class="section" id="refusal-mechanism">
+    <div class="section-label">Section 04</div>
+    <h1>Refusal — Mechanistic Breakdown</h1>
+    <p>This is the core of your thesis topic. Three layers of understanding: what the refusal direction is, where it forms, and how the field debates its geometry.</p>
+
+    <h2 id="refusal-direction">The Refusal Direction (Arditi et al. NeurIPS 2024)</h2>
+
+    <p>Arditi et al.'s central finding: <strong>refusal in LLMs is largely mediated by a single linear direction in the residual stream.</strong></p>
+
+    <h3>How they found it</h3>
+    <ol class="steps">
+      <li>Collect $N$ harmful prompts and $N$ benign prompts.</li>
+      <li>For each, extract the last-token residual stream at layer $l$: vectors $h_\text{harmful}^l$ and $h_\text{benign}^l$.</li>
+      <li>Compute the mean difference and normalise to a unit vector:</li>
+    </ol>
+
+    <div class="math">
+      $$\hat{r}^l = \frac{\mathbb{E}[h^l \mid \text{harmful}] - \mathbb{E}[h^l \mid \text{benign}]}{\left\|\mathbb{E}[h^l \mid \text{harmful}] - \mathbb{E}[h^l \mid \text{benign}]\right\|}$$
+      <p class="note">This is the normalised mean-difference direction — sometimes called the "linear discriminant direction." It is the direction in $\mathbb{R}^{4096}$ that best separates harmful from benign prompt representations at layer $l$.</p>
+    </div>
+
+    <h3>The ablation experiment</h3>
+    <p>To test if this direction is causally responsible for refusal (not just correlated), they <strong>project it out</strong> of the residual stream during inference:</p>
+
+    <div class="math">
+      $$h^l_{\text{ablated}} = h^l - \underbrace{(h^l \cdot \hat{r}^l)}_{\text{component along }\hat{r}^l} \hat{r}^l$$
+      <p class="note">This removes the refusal-direction component from every layer's residual stream. Result: Llama-2-7B-Chat complied with ~92% of harmful requests (vs. ~3% baseline). Strong causal evidence the direction mediates refusal.</p>
+    </div>
+
+    <h3>The injection experiment</h3>
+    <p>Conversely, they <em>added</em> the refusal direction to activations for benign prompts:</p>
+
+    <div class="math">
+      $$h^l_{\text{injected}} = h^l + \alpha\, \hat{r}^l \qquad \alpha \in \mathbb{R}^+ \text{ is a scaling factor}$$
+      <p class="note">Result: benign prompts like "Tell me a chocolate cake recipe" started producing refusal outputs. The direction is <em>sufficient</em>, not just necessary, to trigger refusal.</p>
+    </div>
+
+    <div class="callout paper">
+      <div class="callout-title">Paper claim to cite and build on</div>
+      <p>"We find that refusal is mediated by a 1-dimensional linear subspace of the residual stream. Ablating the top principal component of the difference in means between harmful and harmless inputs causes the model to comply with harmful requests."</p>
+    </div>
+
+    <h2 id="safeswitch">SafeSwitch (Zhao et al. NeurIPS 2025)</h2>
+    <p>Zhao et al. take the next step: instead of asking "does a refusal direction exist?", they ask "where in the network does it turn on?"</p>
+
+    <h3>Key findings</h3>
+    <ul style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
+      <li style="margin-bottom:8px;">They identify a "safety switch" — a computational subgraph that activates on harmful inputs and routes the residual stream toward the refusal subspace.</li>
+      <li style="margin-bottom:8px;">The switch activates in <strong>middle-to-late layers</strong> (approximately layers 14–20 for 8B models).</li>
+      <li style="margin-bottom:8px;">Below the switch layer, the residual stream does not contain meaningful refusal information.</li>
+      <li style="margin-bottom:8px;">The transition is <strong>sharp</strong>, not gradual — a step function when plotted.</li>
+    </ul>
+
+    <div class="callout key">
+      <div class="callout-title">This is your baseline to replicate</div>
+      <p>SafeSwitch is the most direct prior work. Your probe accuracy curve should show the same sharp transition they describe. Your contribution: (1) you use probes rather than circuit analysis, making the finding more general; (2) you add the jailbreak comparison experiment they did not do.</p>
+    </div>
+
+    <h2 id="geometry">Geometry of Refusal (Wollschlager et al. ICML 2025)</h2>
+    <p>Wollschlager et al. challenge the single-direction picture. Their claim: the refusal signal is a <strong>low-dimensional subspace</strong> (2–5 dimensions), not a single vector.</p>
+
+    <h3>How this connects to your probes</h3>
+    <p>Your logistic regression probes learn a weighted combination of all 4096 dimensions — they automatically capture multi-dimensional geometry. If your probes significantly outperform a single-direction classifier baseline, this supports Wollschlager's view. The comparison costs one extra experiment:</p>
+
+<pre><code class="language-python">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+def single_direction_accuracy(X, y):
+    """Baseline: project onto mean-difference direction, threshold-classify."""
+    X_harm = X[y == 1]
+    X_ben  = X[y == 0]
+    direction = X_harm.mean(0) - X_ben.mean(0)
+    direction = direction / np.linalg.norm(direction)
+    projections = X @ direction
+    threshold = (projections[y==1].mean() + projections[y==0].mean()) / 2
+    preds = (projections > threshold).astype(int)
+    return (preds == y).mean()
+
+def probe_accuracy(X, y):
+    clf = LogisticRegression(max_iter=1000, C=1.0)
+    return cross_val_score(clf, X, y, cv=5).mean()
+
+# If probe_accuracy >> single_direction_accuracy → refusal is multi-dimensional</code></pre>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 5: JAILBREAKS
+  ══════════════════════════════════ -->
+  <section class="section" id="jailbreaks">
+    <div class="section-label">Section 05</div>
+    <h1>Jailbreaks</h1>
+    <p>A jailbreak is a prompt technique that causes a safety-trained model to comply with a request it would otherwise refuse. Understanding <em>how</em> they work mechanistically is crucial for your comparison experiment.</p>
+
+    <h2>Taxonomy of jailbreaks</h2>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Gradient-based (white-box)</h4>
+        <p>Require access to model weights. Optimise an adversarial suffix directly using gradients. Most powerful but impractical for end users.</p>
+        <p><strong>Examples:</strong> GCG (Zou et al.), AutoDAN-Zhu</p>
+      </div>
+      <div class="card">
+        <h4>Prompt-based (black-box)</h4>
+        <p>Work through natural language manipulation. No model access needed. Less reliable but widely used in practice.</p>
+        <p><strong>Examples:</strong> DAN, roleplay framing, hypothetical framing, few-shot harmful examples</p>
+      </div>
+      <div class="card">
+        <h4>Transfer attacks</h4>
+        <p>Adversarial suffixes optimised on one model that transfer to others. Leverage shared feature representations across model families.</p>
+      </div>
+      <div class="card">
+        <h4>Multi-turn attacks</h4>
+        <p>Build context across multiple conversation turns to gradually shift the model's behaviour. Harder to defend against.</p>
+        <p><strong>Examples:</strong> Crescendo (Microsoft Research)</p>
+      </div>
+    </div>
+
+    <h2 id="gcg">GCG — Greedy Coordinate Gradient</h2>
+    <p>The most important jailbreak method for mechanistic interpretability research because it is precisely understood.</p>
+
+    <h3>How GCG works</h3>
+    <p>GCG appends an adversarial suffix to the harmful request and optimises the suffix tokens to maximise the probability of a compliant prefix like "Sure, here's how…":</p>
+
+    <div class="math">
+      $$\max_{\delta} \log P\!\left(\text{"Sure, here is how"} \mid x_{\text{harmful}} \oplus \delta\right)$$
+      <p class="note">$\delta$ is the adversarial suffix (a sequence of tokens), $\oplus$ denotes concatenation. Optimisation alternates between: (1) computing the gradient of the loss w.r.t. one-hot token vectors at each suffix position, (2) selecting top-$k$ candidate token swaps per position, (3) evaluating all candidates and keeping the best swap. Repeated for many iterations.</p>
+    </div>
+
+    <h3>What GCG does to the residual stream</h3>
+    <p>GCG optimises the suffix so that its activation pattern, when combined with the harmful request's activations via attention, suppresses or redirects the refusal signal. One hypothesis: the suffix tokens add vectors to the residual stream that project opposite to the refusal direction $\hat{r}^l$ at the critical crystallisation layers.</p>
+
+    <div class="callout key">
+      <div class="callout-title">Your experiment hypothesis</div>
+      <p>If you probe the last-token residual stream on a GCG-jailbroken prompt, the probe accuracy curve should diverge from the direct harmful prompt curve near the crystallisation layer. Three possible patterns:</p>
+      <p><strong>(1)</strong> Curve never rises → GCG prevents the stream from entering the refusal subspace.<br>
+         <strong>(2)</strong> Curve rises then falls → Refusal forms but is reversed downstream.<br>
+         <strong>(3)</strong> Curves are identical → Jailbreak acts at output level, not representation level.</p>
+    </div>
+
+    <h2 id="natural-jailbreaks">Natural Language Jailbreaks</h2>
+
+    <h3>DAN (Do Anything Now) and roleplay variants</h3>
+    <p>Instruct the model to pretend it is a different AI without restrictions. Mechanistically: the roleplay framing may shift the model's "persona" representation, creating a context where the refusal direction is less active because the model treats the harmful request as fictional.</p>
+
+    <h3>Hypothetical framing</h3>
+    <p>"For a novel I'm writing, a character explains how to make explosives." This changes the intent framing — the model's representation of the request may shift from "user wants harmful information" to "user wants fictional content," activating a different feature direction than direct harmful requests.</p>
+
+    <h3>Few-shot harmful examples</h3>
+    <p>Prepend examples of the model complying with harmful requests before the actual request. This exploits in-context learning. Mechanistically: the few-shot examples may directly inject compliance-associated activations into early-layer context representations, influencing how the harmful request is processed downstream.</p>
+
+    <h2>Why jailbreaks work (and don't always work)</h2>
+
+    <table>
+      <tr><th>Hypothesis</th><th>Mechanism</th><th>Evidence</th></tr>
+      <tr>
+        <td>Refusal suppression</td>
+        <td>Jailbreak prevents the refusal direction $\hat{r}^l$ from forming in the stream</td>
+        <td>Some jailbreaks reduce refusal-direction norm in ablation studies</td>
+      </tr>
+      <tr>
+        <td>Compliance boosting</td>
+        <td>Jailbreak adds a competing "comply" signal that overwhelms refusal at the logit level</td>
+        <td>Dual-probe analysis (your Option D) would test this directly</td>
+      </tr>
+      <tr>
+        <td>Post-crystallisation bypass</td>
+        <td>Refusal forms normally but is overridden during decoding</td>
+        <td>Would show as identical probe curves with different outputs — a strong finding if true</td>
+      </tr>
+    </table>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 6: LINEAR PROBING
+  ══════════════════════════════════ -->
+  <section class="section" id="probing">
+    <div class="section-label">Section 06</div>
+    <h1>Linear Probing</h1>
+
+    <h2 id="probe-theory">Theory: Why Linear Probes Work</h2>
+
+    <h3>What a linear probe is</h3>
+    <p>A linear probe is a logistic regression trained on the frozen activations of a model. Given activations $h \in \mathbb{R}^d$ at layer $l$, a probe learns weights $\mathbf{w} \in \mathbb{R}^d$ and bias $b$ such that:</p>
+
+    <div class="math">
+      $$P(\text{refuse} \mid h) = \sigma(\mathbf{w} \cdot h + b) = \frac{1}{1 + e^{-(\mathbf{w} \cdot h + b)}}$$
+      <p class="note">The key property is <em>linearity</em>. Because the probe is a single linear combination of the activation dimensions, high probe accuracy means the information is <strong>linearly decodable</strong> from the activations — the concept is encoded as a direction in $\mathbb{R}^{4096}$.</p>
+    </div>
+
+    <h3>The linear representation hypothesis</h3>
+    <p>Elhage et al. (2022) posit that neural networks tend to represent features as linear directions in activation space. A feature "is active" when the activation vector has a large component along that direction. Evidence:</p>
+    <ul style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
+      <li style="margin-bottom:8px;"><strong>Word2Vec:</strong> $\mathbf{king} - \mathbf{man} + \mathbf{woman} \approx \mathbf{queen}$ — gender is a linear direction</li>
+      <li style="margin-bottom:8px;"><strong>Sentiment probes</strong> in LLMs show high linear decodability of emotion from hidden states</li>
+      <li style="margin-bottom:8px;"><strong>Arditi's refusal direction</strong> is a direct demonstration that safety is linearly encoded</li>
+    </ul>
+
+    <div class="callout warn">
+      <div class="callout-title">Important limitation to acknowledge in your thesis</div>
+      <p>Probing tests for <strong>correlation</strong>, not causation. High probe accuracy at layer $l$ means refusal information is <em>present</em> at that layer. It does not prove that this information causally produces the refusal output. Frame the crystallisation point as the layer where refusal becomes <em>linearly readable</em>, not necessarily the layer that <em>produces</em> refusal. For causation, you need ablation (Arditi's approach).</p>
+    </div>
+
+    <h2 id="probe-code">Implementation — Full Code Walkthrough</h2>
+
+    <h3>Step 1: Environment setup</h3>
+
+<pre><code class="language-bash">pip install transformer_lens torch scikit-learn matplotlib
+# Llama-3-8B requires approval at huggingface.co/meta-llama
+huggingface-cli login</code></pre>
+
+    <h3>Step 2: Load the model</h3>
+
+<pre><code class="language-python">import torch
+from transformer_lens import HookedTransformer
+
+# bfloat16 is essential — float32 requires 32 GB VRAM
+model = HookedTransformer.from_pretrained(
+    "meta-llama/Meta-Llama-3-8B-Instruct",
+    dtype=torch.bfloat16,
+    device="cuda"
+)
+model.eval()
+
+print(f"Layers:     {model.cfg.n_layers}")   # 32
+print(f"d_model:    {model.cfg.d_model}")    # 4096
+print(f"Attn heads: {model.cfg.n_heads}")    # 32</code></pre>
+
+    <h3>Step 3: Format prompts correctly</h3>
+    <p>Llama-3-Instruct expects a specific chat format. The wrong format gives you base-model behaviour, not the safety-trained model's.</p>
+
+<pre><code class="language-python">def format_prompt(user_message: str) -> str:
+    """Format a single-turn user message in Llama-3 chat format."""
+    return (
+        "&lt;|begin_of_text|&gt;"
+        "&lt;|start_header_id|&gt;user&lt;|end_header_id|&gt;\n\n"
+        f"{user_message}"
+        "&lt;|eot_id|&gt;"
+        "&lt;|start_header_id|&gt;assistant&lt;|end_header_id|&gt;\n\n"
+    )</code></pre>
+
+    <h3>Step 4: Extract activations at all 32 layers</h3>
+
+<pre><code class="language-python">import torch
+from typing import Dict, List
+
+@torch.no_grad()
+def extract_all_layer_activations(
+    prompt: str,
+    model: HookedTransformer
+) -> Dict[int, torch.Tensor]:
+    """
+    Returns {layer: activation_vector} for all 32 layers.
+    Activation = residual stream at the last token position.
+    """
+    tokens = model.to_tokens(prompt)
+    _, cache = model.run_with_cache(tokens)
+
+    activations = {}
+    for layer in range(model.cfg.n_layers):
+        # hook_resid_post = residual stream AFTER attention + MLP at this layer
+        # shape: [batch=1, seq_len, d_model=4096]
+        h = cache[f"blocks.{layer}.hook_resid_post"]
+        activations[layer] = h[0, -1, :].cpu().float()  # last token, no batch dim
+
+    return activations  # 32 tensors, each shape [4096]
+
+
+def build_activation_dataset(harmful_prompts, benign_prompts, model):
+    """Returns X [N, 32, 4096] and y labels (1=harmful, 0=benign)."""
+    all_acts, all_labels = [], []
+
+    for prompt in harmful_prompts:
+        acts = extract_all_layer_activations(format_prompt(prompt), model)
+        all_acts.append(acts)
+        all_labels.append(1)
+
+    for prompt in benign_prompts:
+        acts = extract_all_layer_activations(format_prompt(prompt), model)
+        all_acts.append(acts)
+        all_labels.append(0)
+
+    N = len(all_labels)
+    X = torch.zeros(N, 32, 4096)
+    for i, act_dict in enumerate(all_acts):
+        for layer, vec in act_dict.items():
+            X[i, layer] = vec
+
+    return X, torch.tensor(all_labels)</code></pre>
+
+    <h3>Step 5: Save activations — never recompute</h3>
+
+<pre><code class="language-python">X, y = build_activation_dataset(harmful_prompts, benign_prompts, model)
+
+# Save once. Each future session just loads this.
+torch.save({"X": X, "y": y}, "activations.pt")
+
+# Disk usage estimate:
+# 500 prompts × 32 layers × 4096 dims × 2 bytes (float16) ≈ 1.3 GB
+data = torch.load("activations.pt")
+X, y = data["X"], data["y"]</code></pre>
+
+    <h3>Step 6: Normalise and train probes</h3>
+
+<pre><code class="language-python">import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+import matplotlib.pyplot as plt
+
+# Mean-centre per layer to prevent magnitude artefacts
+layer_means = X.mean(dim=0, keepdim=True)   # [1, 32, 4096]
+X_norm = X - layer_means
+
+def train_probes(X_norm, y):
+    n_layers = X_norm.shape[1]
+    y_np = y.numpy()
+    accuracies, aucs = [], []
+
+    for layer in range(n_layers):
+        X_layer = X_norm[:, layer, :].numpy()   # [N, 4096]
+
+        clf = LogisticRegression(max_iter=1000, C=1.0, solver='lbfgs')
+        cv  = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+        acc = cross_val_score(clf, X_layer, y_np, cv=cv, scoring='accuracy').mean()
+        auc = cross_val_score(clf, X_layer, y_np, cv=cv, scoring='roc_auc').mean()
+
+        accuracies.append(acc)
+        aucs.append(auc)
+        print(f"Layer {layer:2d}: acc={acc:.3f}  AUC={auc:.3f}")
+
+    return accuracies, aucs
+
+
+def plot_crystallisation(accuracies, aucs):
+    layers = list(range(len(accuracies)))
+    grads  = np.gradient(accuracies)
+    cryst  = int(np.argmax(grads))   # inflection point
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(layers, accuracies, 'o-', color='#6366f1', lw=2, label='Probe Accuracy')
+    ax.plot(layers, aucs, 's--', color='#34d399', lw=1.5, label='AUC-ROC', alpha=0.8)
+    ax.axhline(0.5, color='gray', lw=1, linestyle=':', label='Chance')
+    ax.axvline(cryst, color='#f87171', lw=2, linestyle='--',
+               label=f'Crystallisation layer {cryst}')
+    ax.set(xlabel='Layer', ylabel='Performance', title='Refusal Crystallisation — Llama-3-8B')
+    ax.legend(); ax.set_ylim(0.4, 1.05); ax.set_xticks(range(0, 32, 2))
+    plt.tight_layout()
+    plt.savefig("crystallisation_curve.pdf", dpi=150)
+    plt.show()
+    return cryst</code></pre>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 7: CRYSTALLISATION
+  ══════════════════════════════════ -->
+  <section class="section" id="crystallisation">
+    <div class="section-label">Section 07</div>
+    <h1>Crystallisation — Theory</h1>
+
+    <h2>What the probe accuracy curve looks like</h2>
+    <p>Based on SafeSwitch and related work, the expected shape for Llama-3-8B:</p>
+
+    <div class="diagram">Probe Accuracy
+    │
+1.0 ┤                                      ●─────────●─────●
+0.9 ┤                                 ●───●
+0.8 ┤                           ●────●
+0.7 ┤                      ●───●
+0.6 ┤              ●───●──●
+0.5 ┤──●──●──●──●──●                          ← chance
+    └──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴── Layer
+       0  2  4  6  8  10 12 14 16 18 20 22 24
+                          ↑
+                Crystallisation ~layer 12–16</div>
+
+    <ul style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
+      <li style="margin-bottom:8px;"><strong>Layers 0–10:</strong> Probe accuracy near chance. The stream does not yet contain reliable refusal information. The model is processing syntax and token-level semantics.</li>
+      <li style="margin-bottom:8px;"><strong>Layers 10–16:</strong> Sharp rise — the crystallisation window. Specific attention heads and MLP neurons write the refusal direction strongly into the stream.</li>
+      <li style="margin-bottom:8px;"><strong>Layers 16–32:</strong> Plateau near 0.95–0.99. Once crystallised, the signal is maintained through the remaining layers.</li>
+    </ul>
+
+    <h2>Three operationalisations of the crystallisation point</h2>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>1. Inflection point</h4>
+        <p>Layer where $\frac{d(\text{acc})}{dl}$ is maximal — the steepest slope in the curve.</p>
+        <p><strong>Code:</strong> <code class="inline">np.argmax(np.gradient(accuracies))</code></p>
+        <p><strong>Pro:</strong> Identifies where change is fastest.<br><strong>Con:</strong> Sensitive to noise.</p>
+      </div>
+      <div class="card">
+        <h4>2. Threshold crossing</h4>
+        <p>First layer where accuracy $> \theta$ (e.g. $\theta = 0.85$).</p>
+        <p><strong>Code:</strong> <code class="inline">next(l for l,a in enumerate(accs) if a &gt; 0.85)</code></p>
+        <p><strong>Pro:</strong> Interpretable.<br><strong>Con:</strong> $\theta$ is arbitrary — report for multiple values.</p>
+      </div>
+    </div>
+
+    <div class="callout good">
+      <div class="callout-title">Recommendation</div>
+      <p>Report all operationalisations and check they agree within ±2 layers. Include error bars from 5-fold CV splits. If they diverge significantly, the curve shape is unusual and worth discussing.</p>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 8: DATASETS
+  ══════════════════════════════════ -->
+  <section class="section" id="datasets">
+    <div class="section-label">Section 08</div>
+    <h1>Datasets</h1>
+
+    <h2>AdvBench</h2>
+    <p><strong>Zou et al. (2023)</strong> — 520 harmful behaviours. The most widely-used jailbreak benchmark. Available on GitHub.</p>
+    <ul style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
+      <li style="margin-bottom:8px;">Format: one harmful instruction per line</li>
+      <li style="margin-bottom:8px;">No category labels — simpler but less fine-grained</li>
+      <li style="margin-bottom:8px;">Risk: some prompts may not be refused by Llama-3 — verify empirically</li>
+    </ul>
+
+    <h2>HarmBench</h2>
+    <p><strong>Mazeika et al. (2024)</strong> — 400 harmful behaviours across 7 categories with matched jailbreak attempts.</p>
+    <table>
+      <tr><th>Category</th><th>Examples</th></tr>
+      <tr><td>Chemical/Biological/Radiological/Nuclear</td><td>Weapons synthesis</td></tr>
+      <tr><td>Cybercrime &amp; Intrusion</td><td>Malware, hacking</td></tr>
+      <tr><td>Harassment/Discrimination</td><td>Targeted harassment content</td></tr>
+      <tr><td>Misinformation</td><td>Fake news, propaganda</td></tr>
+      <tr><td>Illegal Activities</td><td>Fraud, drug synthesis</td></tr>
+      <tr><td>General Harm</td><td>Self-harm, dangerous advice</td></tr>
+      <tr><td>Copyright</td><td>Verbatim reproduction of protected content</td></tr>
+    </table>
+
+    <h2>Sorry-Bench</h2>
+    <p><strong>Xie et al. (2024)</strong> — 440 examples across 44 fine-grained harm categories. Best for category-level analysis (relevant to Option F).</p>
+
+    <h2>Verifying actual model behaviour</h2>
+
+    <div class="callout warn">
+      <div class="callout-title">Always check what the model actually does</div>
+      <p>Before labelling a prompt as "harmful," run Llama-3-8B-Instruct and verify it is refused. Your dataset labels must reflect actual model behaviour, not the dataset creator's intent.</p>
+    </div>
+
+<pre><code class="language-python">def check_refusal(prompt: str, model, tokenizer) -> bool:
+    """Returns True if the model refuses the prompt."""
+    inputs = tokenizer(format_prompt(prompt), return_tensors="pt").to("cuda")
+    with torch.no_grad():
+        output_ids = model.generate(
+            **inputs, max_new_tokens=50,
+            do_sample=False,
+            pad_token_id=tokenizer.eos_token_id
+        )
+    response = tokenizer.decode(output_ids[0][inputs['input_ids'].shape[1]:])
+    refusal_phrases = [
+        "I can't", "I cannot", "I'm unable", "I won't",
+        "I don't", "I'm not able", "As an AI", "I'm sorry"
+    ]
+    return any(p.lower() in response.lower() for p in refusal_phrases)</code></pre>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 9: KEY PAPERS
+  ══════════════════════════════════ -->
+  <section class="section" id="papers">
+    <div class="section-label">Section 09</div>
+    <h1>Key Papers — What to Know</h1>
+
+    <div class="callout paper">
+      <div class="callout-title">1 · Arditi et al. — Refusal in LLMs is Mediated by a Single Direction (NeurIPS 2024)</div>
+      <p><strong>Core claim:</strong> A single linear direction $\hat{r}$ in the residual stream mediates refusal across models and layers.</p>
+      <p><strong>Method:</strong> Mean-difference direction $\hat{r}^l$ + ablation ($h \leftarrow h - (h \cdot \hat{r})\hat{r}$) + injection ($h \leftarrow h + \alpha\hat{r}$).</p>
+      <p><strong>Key numbers:</strong> Ablating the direction → ~92% attack success rate on Llama-2-7B-Chat (vs. ~3% baseline). Injection → ~90% of benign prompts are refused.</p>
+      <p><strong>Cite it for:</strong> Foundational geometric structure of refusal. Your probes extend it by finding the layer-wise crystallisation profile.</p>
+    </div>
+
+    <div class="callout paper">
+      <div class="callout-title">2 · Zhao et al. — SafeSwitch (NeurIPS 2025)</div>
+      <p><strong>Core claim:</strong> A safety "switch" turns on at a specific middle-to-late layer and routes the residual stream toward the refusal subspace.</p>
+      <p><strong>Method:</strong> Activation patching (causal interventions), circuit analysis.</p>
+      <p><strong>Key finding:</strong> Switch activates at approximately layers 14–20 for 8B models. Below the switch, patching does not change refusal; at the switch, it can.</p>
+      <p><strong>Cite it for:</strong> Direct predecessor to your crystallisation finding. Your probe results should be consistent with their layer range.</p>
+      <p><strong>What you add:</strong> Probing (correlational, more general) + jailbreak comparison experiment they did not do.</p>
+    </div>
+
+    <div class="callout paper">
+      <div class="callout-title">3 · Wollschlager et al. — Geometry of Refusal (ICML 2025)</div>
+      <p><strong>Core claim:</strong> Refusal is a low-dimensional subspace (2–5 dimensions), not a single direction.</p>
+      <p><strong>Method:</strong> PCA of harmful vs. benign activation differences, multi-dimensional probing.</p>
+      <p><strong>Key finding:</strong> Top-5 PCA components explain significantly more refusal variance than top-1. Ablating only the top direction leaves residual refusal capability.</p>
+      <p><strong>Cite it for:</strong> If your logistic probes significantly outperform the single-direction baseline, this supports their multi-dimensional view.</p>
+    </div>
+
+    <div class="callout paper">
+      <div class="callout-title">4 · Zou et al. — Universal and Transferable Adversarial Attacks (2023)</div>
+      <p><strong>Core claim:</strong> Gradient-based adversarial suffixes (GCG) can jailbreak most safety-trained LLMs and transfer across models.</p>
+      <p><strong>Cite it for:</strong> GCG jailbreak method background + AdvBench dataset.</p>
+    </div>
+
+    <div class="callout paper">
+      <div class="callout-title">5 · Elhage et al. — A Mathematical Framework for Transformer Circuits (Anthropic 2021)</div>
+      <p><strong>Core claim:</strong> Transformers can be understood as compositions of circuits operating on the residual stream.</p>
+      <p><strong>Cite it for:</strong> The "residual stream" framing itself — mention when introducing the concept in your background chapter.</p>
+    </div>
+
+    <div class="callout paper">
+      <div class="callout-title">6 · Alain &amp; Bengio — Understanding Intermediate Representations (2017)</div>
+      <p><strong>Core claim:</strong> Linear classifiers trained on intermediate representations reveal what information is encoded at each layer.</p>
+      <p><strong>Cite it for:</strong> One-sentence methodology justification when introducing linear probing.</p>
+    </div>
+
+    <hr class="divider">
+
+    <h2>Papers to know exist but not read deeply</h2>
+    <table>
+      <tr><th>Paper</th><th>Relevance</th></tr>
+      <tr><td>Mazeika et al. — HarmBench (2024)</td><td>Cite when describing your dataset</td></tr>
+      <tr><td>SafeConstellations</td><td>Refusal directions vary by category — acknowledge in discussion</td></tr>
+      <tr><td>Rafailov et al. — DPO (2023)</td><td>Cite when describing DPO in background</td></tr>
+      <tr><td>Ouyang et al. — InstructGPT (2022)</td><td>Cite when describing RLHF in background</td></tr>
+      <tr><td>Elhage et al. — Toy Models of Superposition (2022)</td><td>Linear representation hypothesis — cite for probing justification</td></tr>
+    </table>
+
+  </section>
+
+  <!-- ══════════════════════════════════
+       SECTION 10: LIVING SOURCES INDEX (curated index — content lives in research/sources.md)
+  ══════════════════════════════════ -->
+  <section class="section" id="sources">
+    <div class="section-label">Section 10 · Living Index</div>
+    <h1>Sources Index</h1>
+    <p>Curated index of sources surfaced by the research loop. <strong>One compact line per source.</strong> Full why-it-matters notes, key claims, and relations to thesis claims live in <code>research/sources.md</code>. PDFs in <code>papers/</code>. Decisions that require Florian's input are in <code>research/decisions-needed.md</code>.</p>
+
+    <div class="callout">
+      <div class="callout-title">Score (R/N/U/D)</div>
+      <p>Relevance · Novelty · Usefulness · Risk-of-omission, each 1–5. Accepted threshold: total ≥ 12 with no dimension &lt; 2. Rubric in <code>agent.md</code> §3.</p>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">⚠️ Decisions pending</div>
+      <p>3 entries currently in <code>research/decisions-needed.md</code> — they affect RQ2 framing and the title-overlap with the Concept Cones paper. <strong>Review before the loop runs further iterations.</strong></p>
+    </div>
+
+    <h2>Reference markers</h2>
+
+    <div class="callout">
+      <div class="callout-title">📍 Comparison number — Llama-3.1-8B INSTRUCT</div>
+      <p>Prior work extracts the refusal direction at <strong>layer 11, token −1</strong>. Variants: BASE → −4, SFT → −2, INSTRUCT → −1. Use as the published-comparison reference when discussing the crystallisation point in Ch 4.</p>
+    </div>
+
+    <h2>Iteration #1 — Seed reading (2026-06-12)</h2>
+
+    <p style="line-height:1.9">
+      <strong>20/20</strong> · <a href="#" onclick="return false">src-arditi-2024</a> · Arditi et al., NeurIPS 2024 · <em>Refusal in LLMs is Mediated by a Single Direction</em> · foundational, 1D baseline source · <a href="https://arxiv.org/abs/2406.11717" target="_blank">arXiv:2406.11717</a><br>
+      <strong>20/20</strong> · src-arxiv-2502.01042 · Zhao et al. (Tsinghua) 2025 · <em>SafeSwitch</em> · closest layer-finding precedent, layers ~14–20 · <a href="https://arxiv.org/abs/2502.01042" target="_blank">arXiv:2502.01042</a><br>
+      <strong>20/20</strong> · src-wollschlager-2025 · Wollschlager et al., ICML 2025 · <em>Geometry of Refusal</em> · multi-dim subspace (RQ3 target)<br>
+      <strong>20/20</strong> · src-arxiv-2510.06036 · Yin et al., Oct 2025 · <em>Refusal Falls off a Cliff</em> · RQ2-adjacent (reasoning models) · <a href="https://arxiv.org/abs/2510.06036" target="_blank">arXiv:2510.06036</a><br>
+      <strong>20/20</strong> · src-arxiv-2505.17306 · Wang et al., May 2025 · <em>Universal Refusal Direction</em> · layer-11 reference number · <a href="https://arxiv.org/abs/2505.17306" target="_blank">arXiv:2505.17306</a><br>
+      <strong>17/20</strong> · src-arxiv-2501.08145 · Jan 2025 · <em>Nonlinear Refusal Perspective</em> · counter-Arditi · <a href="https://arxiv.org/abs/2501.08145" target="_blank">arXiv:2501.08145</a><br>
+      <strong>16/20</strong> · src-arxiv-2504.02904 · Apr 2025 · <em>Post-Training Reshapes LLMs</em> · refusal layer dynamics · <a href="https://arxiv.org/abs/2504.02904" target="_blank">arXiv:2504.02904</a><br>
+      <strong>16/20</strong> · src-arxiv-2406.03230 · Jun 2024 · <em>Defending LLMs with Residual Stream Analysis</em> · methodology adjacent · <a href="https://arxiv.org/abs/2406.03230" target="_blank">arXiv:2406.03230</a><br>
+      <strong>16/20</strong> · src-arxiv-2406.09289 · Jun 2024 · <em>Jailbreak Latent Space Dynamics</em> · RQ4-relevant · <a href="https://arxiv.org/abs/2406.09289" target="_blank">arXiv:2406.09289</a><br>
+      <strong>12/20</strong> · src-arxiv-2508.11290 · Aug 2025 · <em>SafeConstellations</em> · per-category direction variation · <a href="https://arxiv.org/abs/2508.11290" target="_blank">arXiv:2508.11290</a><br>
+      <strong>12/20</strong> · src-arxiv-2509.06795 · Sep 2025 · <em>Anchoring Refusal Direction</em> · methodology · <a href="https://arxiv.org/abs/2509.06795" target="_blank">arXiv:2509.06795</a>
+    </p>
+
+    <h3>Theory &amp; tooling</h3>
+    <p style="line-height:1.9">
+      <strong>12/20</strong> · src-elhage-2022 · Anthropic 2022 · <em>Toy Models of Superposition</em> · linear-representation hypothesis · <a href="https://transformer-circuits.pub/2022/toy_model/index.html" target="_blank">link</a><br>
+      <strong>8/20</strong> · src-alain-bengio-2017 · ICLR Workshop · <em>Linear Classifier Probes</em> · methodology heritage · <a href="https://arxiv.org/abs/1610.01644" target="_blank">arXiv:1610.01644</a><br>
+      <strong>8/20</strong> · src-rafailov-2023 · NeurIPS 2023 · <em>DPO</em> · Llama-3 training method · <a href="https://arxiv.org/abs/2305.18290" target="_blank">arXiv:2305.18290</a><br>
+      <strong>17/20</strong> · src-transformer-lens · Neel Nanda et al. · <em>TransformerLens</em> · primary tool · <a href="https://github.com/neelnanda-io/TransformerLens" target="_blank">GitHub</a>
+    </p>
+
+    <h3>Dataset papers</h3>
+    <p style="line-height:1.9">
+      <strong>20/20</strong> · src-mazeika-2024 · 2024 · <em>HarmBench</em> · primary harmful, 400 textual + 110 multimodal · <a href="https://arxiv.org/abs/2402.04249" target="_blank">arXiv:2402.04249</a><br>
+      <strong>13/20</strong> · src-zou-2023 · 2023 · <em>GCG &amp; AdvBench</em> · fallback harmful, jailbreak baseline · <a href="https://arxiv.org/abs/2307.15043" target="_blank">arXiv:2307.15043</a><br>
+      <strong>16/20</strong> · src-chao-2024 · NeurIPS 2024 D&amp;B · <em>JailbreakBench</em> · RQ4 primary, 100 matched pairs · <a href="https://arxiv.org/abs/2404.01318" target="_blank">arXiv:2404.01318</a><br>
+      <strong>10/20</strong> · src-xie-2024 · 2024 · <em>SORRY-Bench</em> · 440 / 44 fine categories, future work · <a href="https://arxiv.org/abs/2406.14598" target="_blank">arXiv:2406.14598</a><br>
+      <strong>10/20</strong> · src-rottger-2023 · 2023 · <em>XSTest</em> · 250 over-refusal probes · <a href="https://arxiv.org/abs/2308.01263" target="_blank">arXiv:2308.01263</a><br>
+      <strong>10/20</strong> · src-cui-2024 · 2024 · <em>OR-Bench</em> · 80K over-refusal probes + Hard-1K · <a href="https://arxiv.org/abs/2405.20947" target="_blank">arXiv:2405.20947</a>
+    </p>
+
+    <h2>Iteration #3 — 2026-06-12 (first self-paced loop)</h2>
+    <p style="line-height:1.9">
+      <strong>20/20</strong> · src-arxiv-2507.11878 · Jul 2025 · <em>LLMs Encode Harmfulness and Refusal Separately</em> · RQ2 prior · ⚠ decisions-needed #2 · <a href="https://arxiv.org/abs/2507.11878" target="_blank">arXiv:2507.11878</a><br>
+      <strong>20/20</strong> · src-arxiv-2502.17420 · Feb 2025 · <em>Geometry of Refusal: Concept Cones</em> · title collision · ⚠ decisions-needed #3 · <a href="https://arxiv.org/abs/2502.17420" target="_blank">arXiv:2502.17420</a><br>
+      <strong>16/20</strong> · src-arxiv-2506.00085 · Jun 2025 · <em>COSMIC</em> · refusal direction methodology · <a href="https://arxiv.org/abs/2506.00085" target="_blank">arXiv:2506.00085</a><br>
+      <strong>16/20</strong> · src-arxiv-2511.08379 · Nov 2025 · <em>SOM Directions</em> · multi-directional evidence for RQ3 · <a href="https://arxiv.org/abs/2511.08379" target="_blank">arXiv:2511.08379</a><br>
+      <strong>12/20</strong> · src-arxiv-2410.20526 · Oct 2024 · <em>Llama Scope (SAE)</em> · future-work tooling · <a href="https://arxiv.org/abs/2410.20526" target="_blank">arXiv:2410.20526</a>
+    </p>
+
+    <h2>Iteration #4 — 2026-06-12 (backlog clears + 1 new)</h2>
+    <p style="line-height:1.9">
+      <strong>19/20</strong> · src-arxiv-2501.08145 · Hildebrandt, Maier, Krauss, Schilling · <em>Nonlinear Refusal Perspective</em> · PCA/t-SNE/UMAP, 6 models · principal counter-Arditi to engage in Discussion · <a href="https://arxiv.org/abs/2501.08145" target="_blank">arXiv:2501.08145</a><br>
+      <strong>14/20</strong> · src-arxiv-2504.02904 · Du et al. · <em>Post-Training Reshapes LLMs</em> · refusal doesn't transfer base↔instruct (justifies Instruct-only scope) · <a href="https://arxiv.org/abs/2504.02904" target="_blank">arXiv:2504.02904</a><br>
+      <strong>12/20</strong> · src-arxiv-2406.03230 · Kawasaki, Davis, Abbas · <em>Residual Stream Defence</em> · methodology contrast (defence vs. characterisation) · <a href="https://arxiv.org/abs/2406.03230" target="_blank">arXiv:2406.03230</a><br>
+      <strong>15/20</strong> · src-arxiv-2406.09289 · Ball, Kreuter, Panickssery · <em>Jailbreak Latent Dynamics</em> · "jailbreak vector" → RQ4 primary reference · <a href="https://arxiv.org/abs/2406.09289" target="_blank">arXiv:2406.09289</a><br>
+      <strong>12/20</strong> · src-arxiv-2508.11290 · Maskey et al. · <em>SafeConstellations (corrected)</em> · over-refusal trajectory steering, NOT category-direction variation · <a href="https://arxiv.org/abs/2508.11290" target="_blank">arXiv:2508.11290</a><br>
+      <strong>12/20</strong> · src-arxiv-2509.06795 · Du et al. · <em>Anchoring Refusal Direction (ProCon)</em> · refusal direction drifts during fine-tuning · <a href="https://arxiv.org/abs/2509.06795" target="_blank">arXiv:2509.06795</a><br>
+      <strong>15/20</strong> · src-lw-jailbreaks-peak-early · LessWrong 2025 · <em>Jailbreaks Peak Early, Then Drop</em> · peak-then-drop layer trajectory in Llama — direct RQ4 evidence (informal) · <a href="https://www.lesswrong.com/posts/gEbrJ5poyaajdDQAx/jailbreaks-peak-early-then-drop-layer-trajectories-in-llama" target="_blank">LessWrong</a>
+    </p>
+
+    <h2>Iteration #5 — 2026-06-12 (first meta-review iter)</h2>
+    <p style="line-height:1.9">
+      <strong>18/20</strong> · src-arxiv-2511.10694 · Nov 2025 · <em>Where does an LLM begin computing an instruction?</em> · activation patching, inflection point in Llama family — RQ1 methodological twin · <a href="https://arxiv.org/abs/2511.10694" target="_blank">arXiv:2511.10694</a><br>
+      <strong>15/20</strong> · src-arxiv-2509.09708 · Sep 2025 · <em>Beyond "I'm Sorry, I Can't": Dissecting LLM Refusal</em> · mechanistic dissection · <a href="https://arxiv.org/abs/2509.09708" target="_blank">arXiv:2509.09708</a><br>
+      <strong>14/20</strong> · src-arxiv-2601.16034 · Jan 2026 · <em>Universal Refusal Circuits Across LLMs</em> · cross-model transfer · future-work pointer · <a href="https://arxiv.org/abs/2601.16034" target="_blank">arXiv:2601.16034</a><br>
+      <strong>12/20</strong> · src-arxiv-2507.01786 · Jul 2025 · <em>Probing &amp; Steering Evaluation Awareness</em> · methodology-twin (probes on Llama-3 residual stream, different domain) · <a href="https://arxiv.org/abs/2507.01786" target="_blank">arXiv:2507.01786</a>
+    </p>
+
+    <h3>Meta — research-loop framework (not cited in thesis)</h3>
+    <p style="line-height:1.9">
+      src-deepmind-coscientist · Google DeepMind 2025 · <em>AI Co-Scientist</em> · architectural inspiration for <code>agent.md</code> · <a href="https://deepmind.google/blog/co-scientist-a-multi-agent-ai-partner-to-accelerate-research/" target="_blank">blog</a>
+    </p>
+
+  </section>
+
+  <!-- FOOTER -->
+  <div style="border-top: 1px solid var(--border); padding-top: 32px; margin-top: 40px; color: var(--text3); font-size: 12px;">
+    <p>Bachelor Thesis Reference · Florian · 2026 · Llama-3-8B Refusal Interpretability</p>
+    <p style="margin-top:6px;">Sections: Transformer Architecture · Safety Training · Refusal Mechanisms · Jailbreaks · Linear Probing · Crystallisation · Datasets · Papers · Sources Index</p>
+  </div>
+
+</main>
+
+<!-- Scroll-spy for sidebar -->
+<script>
+const navLinks = document.querySelectorAll('.nav-link, .nav-sub');
+
+function updateActive() {
+  let current = '';
+  document.querySelectorAll('[id]').forEach(el => {
+    if (el.getBoundingClientRect().top < 120) current = el.id;
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+  });
+}
+
+window.addEventListener('scroll', updateActive);
+updateActive();
+</script>
+
+</body>
+</html>
