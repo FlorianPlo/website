@@ -271,6 +271,7 @@ MathJax = {
 
   <div class="nav-group">
     <span class="nav-group-label">Foundation</span>
+    <a class="nav-link" href="#current-work">Current Work</a>
     <a class="nav-link" href="#transformers">Transformer Architecture</a>
     <a class="nav-sub" href="#residual-stream">Residual Stream</a>
     <a class="nav-sub" href="#attention">Attention Mechanism</a>
@@ -322,6 +323,53 @@ MathJax = {
     <h1>LLM Refusal Interpretability<br>Deep Knowledge Guide</h1>
     <p>Everything you need to understand — from how transformers work at the weight level to how refusal crystallises across layers and why jailbreaks sometimes bypass it.</p>
   </div>
+
+  <!-- ══════════════════════════════════
+       SECTION 0: CURRENT WORK
+  ══════════════════════════════════ -->
+  <section class="section" id="current-work">
+    <div class="section-label">Section 00 · Status</div>
+    <h1>Current Work — W1 done, W2 in flight</h1>
+    <p>Live status of the thesis run. Updated <strong>2026-06-19</strong>. Full empirical anchors and bug-fix details in <code>research/findings-w1.md</code>. Six-week timeline in <code>thesis-plan.md</code>; methodology in <code>chapters/3-methodology/</code>.</p>
+
+    <h2 id="status">Status snapshot</h2>
+    <p style="line-height:1.8">
+      ✅ <strong>W1</strong> · Kaggle env, Llama-3.1-8B-Instruct in bfloat16, dataset pipeline (HarmBench official CSV + Alpaca, behaviourally filtered, bidirectional category-matched, within-category length-matched → N = 140 + 140) and one full probe sweep (32 layers × 2 positions × 2 probe types).<br>
+      🟨 <strong>W2 — in flight</strong> · Re-run with two patched artefacts (smart-quote refusal classifier, 1D Arditi threshold). Robustness sweeps: <code>weight_decay ∈ {100, 10, 1, 0.1}</code>, 3 seeds, cross-topic generalisation, cosine vs Arditi's published <code>direction.pt</code>.<br>
+      ⏳ <strong>W3–5</strong> · Chapter writing (Intro, Background, Methodology, Results, Discussion, Conclusion).<br>
+      ⏳ <strong>W6</strong> · Revision. Stretch only if ahead: JailbreakBench + XSTest to upgrade RQ2 from a position effect to a full harmfulness/refusal dissociation in the sense of Zhao Jiachen et al. 2025.
+    </p>
+
+    <h2 id="empirical-anchors">W1 empirical anchors</h2>
+    <p style="line-height:1.8">
+      Behavioural filter rates: HarmBench refused <strong>~99%</strong> (after smart-quote fix); Alpaca complied <strong>100%</strong>.<br>
+      Final balanced corpus: <strong>N = 140 + 140</strong>, no system prompt, manual Arditi-style chat template.<br>
+      <code>t_post-inst</code> LR probe: threshold (acc ≥ 0.85) at <strong>L3</strong>, saturation (acc = 1.00) at <strong>L7–L8</strong>.<br>
+      <code>t_inst</code> LR probe: rises in lockstep, plateaus at <strong>~0.96</strong>, never saturates — surface-feature variance is the ceiling.<br>
+      L0 / <code>t_inst</code> floor ≈ 0.67 — embedding-layer harmfulness, name as surface-feature floor in Limitations.
+    </p>
+
+    <h2 id="artifacts-to-fix">Artefacts patched in-notebook (re-run pending)</h2>
+    <div class="callout">
+      <div class="callout-title">⚠ Smart-quote bypass in <code>is_refusal</code></div>
+      <p>Llama-3.1 emits curly apostrophes (U+2019) in ~19% of refusal phrasings — these slipped past the straight-quote prefix list. Smart-quote normalisation added; HarmBench refusal rate rose from 81% to ~99%.</p>
+    </div>
+    <div class="callout">
+      <div class="callout-title">⚠ 1D Arditi threshold artefact</div>
+      <p>Pre-fix baseline thresholded at benign-median caps accuracy at 0.75 by construction. Replaced with midpoint-of-class-means computed on the training fold. Pre-fix RQ3 gap of ~25 pp was artefactual; corrected gap predicted to be 1–5 pp.</p>
+    </div>
+    <div class="callout">
+      <div class="callout-title">⚠ AUC at L0 / <code>t_post</code></div>
+      <p>Constant-score Mann-Whitney tie-breaking produced AUC = 1.0 instead of 0.5. Short-circuit to 0.5 when score std &lt; 1e-9. Affects only the L0 cell in Fig 3.</p>
+    </div>
+
+    <h2 id="open-questions">Open questions for the supervisor</h2>
+    <p style="line-height:1.8">
+      1. Is the position-effect framing of RQ2 (vs the full Zhao Jiachen dissociation) defensible at bachelor's scope, or should the W6 stretch be pulled into W2?<br>
+      2. Report cosine vs Arditi's published <code>direction.pt</code> as a Ch 4 robustness subsection or as a Discussion-only sanity check?<br>
+      3. Is N = 140 + 140 with bootstrap CIs sufficient for the headline 1.00-saturation claim, or do we need to push to N = 200 + 200 via larger Alpaca pool + relaxed length-match?
+    </p>
+  </section>
 
   <!-- ══════════════════════════════════
        SECTION 1: TRANSFORMER ARCHITECTURE
@@ -618,26 +666,44 @@ Stage 4: Red-teaming + targeted SFT
     <p>Wollschlager et al. challenge the single-direction picture. Their claim: the refusal signal is a <strong>low-dimensional subspace</strong> (2–5 dimensions), not a single vector.</p>
 
     <h3>How this connects to your probes</h3>
-    <p>Your logistic regression probes learn a weighted combination of all 4096 dimensions — they automatically capture multi-dimensional geometry. If your probes significantly outperform a single-direction classifier baseline, this supports Wollschlager's view. The comparison costs one extra experiment:</p>
+    <p>Your logistic regression probes learn a weighted combination of all 4096 dimensions — they automatically capture multi-dimensional geometry. If your probes significantly outperform a single-direction classifier baseline, this supports Wollschlager's view. The comparison costs one extra experiment (PyTorch end-to-end, no sklearn):</p>
 
-<pre><code class="language-python">import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
+<pre><code class="language-python">import torch
+import torch.nn as nn
 
 def single_direction_accuracy(X, y):
     """Baseline: project onto mean-difference direction, threshold-classify."""
     X_harm = X[y == 1]
     X_ben  = X[y == 0]
-    direction = X_harm.mean(0) - X_ben.mean(0)
-    direction = direction / np.linalg.norm(direction)
+    direction = X_harm.to(torch.float64).mean(0) - X_ben.to(torch.float64).mean(0)
+    direction = (direction / (direction.norm() + 1e-12)).to(X.dtype)
     projections = X @ direction
-    threshold = (projections[y==1].mean() + projections[y==0].mean()) / 2
-    preds = (projections > threshold).astype(int)
-    return (preds == y).mean()
+    threshold = (projections[y == 1].mean() + projections[y == 0].mean()) / 2
+    preds = (projections > threshold).long()
+    return (preds == y).float().mean().item()
 
-def probe_accuracy(X, y):
-    clf = LogisticRegression(max_iter=1000, C=1.0)
-    return cross_val_score(clf, X, y, cv=5).mean()
+def probe_accuracy(X, y, weight_decay=1.0):
+    """Full LR probe via nn.Linear + L-BFGS, 5-fold torch stratified CV."""
+    folds = stratified_kfold_indices(y, n_splits=5, seed=0)  # see thesis-reference.md
+    accs = []
+    for k in range(5):
+        te = folds[k]
+        tr = torch.cat([folds[j] for j in range(5) if j != k])
+        probe = nn.Linear(X.shape[1], 1, bias=True).to(X.device)
+        nn.init.zeros_(probe.weight); nn.init.zeros_(probe.bias)
+        opt = torch.optim.LBFGS(probe.parameters(), lr=1.0, max_iter=200,
+                                line_search_fn="strong_wolfe")
+        loss_fn = nn.BCEWithLogitsLoss()
+        yf = y[tr].float().unsqueeze(1)
+        def closure():
+            opt.zero_grad()
+            l = loss_fn(probe(X[tr]), yf) + 0.5 * weight_decay * probe.weight.pow(2).sum() / len(tr)
+            l.backward(); return l
+        opt.step(closure)
+        with torch.no_grad():
+            pred = (probe(X[te]).squeeze(1) > 0).long()
+        accs.append((pred == y[te]).float().mean().item())
+    return sum(accs) / len(accs)
 
 # If probe_accuracy >> single_direction_accuracy → refusal is multi-dimensional</code></pre>
 
@@ -862,31 +928,62 @@ X, y = data["X"], data["y"]</code></pre>
 
     <h3>Step 6: Normalise and train probes</h3>
 
-<pre><code class="language-python">import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+<pre><code class="language-python">import torch
+import torch.nn as nn
 import matplotlib.pyplot as plt
 
 # Mean-centre per layer to prevent magnitude artefacts
 layer_means = X.mean(dim=0, keepdim=True)   # [1, 32, 4096]
 X_norm = X - layer_means
 
+def stratified_kfold_indices(y, n_splits=5, seed=0):
+    g = torch.Generator().manual_seed(seed)
+    folds = [[] for _ in range(n_splits)]
+    for cls in y.unique():
+        idx = (y == cls).nonzero(as_tuple=True)[0]
+        idx = idx[torch.randperm(len(idx), generator=g)]
+        for k, chunk in enumerate(torch.tensor_split(idx, n_splits)):
+            folds[k].append(chunk)
+    return [torch.cat(f) for f in folds]
+
+def roc_auc(y_true, y_score):
+    pos = y_score[y_true == 1]; neg = y_score[y_true == 0]
+    n_p, n_n = len(pos), len(neg)
+    all_s = torch.cat([pos, neg])
+    ranks = all_s.argsort().argsort().float() + 1
+    return ((ranks[:n_p].sum() - n_p * (n_p + 1) / 2) / (n_p * n_n)).item()
+
+def fit_lr_probe(X, y, weight_decay=1.0):
+    probe = nn.Linear(X.shape[1], 1, bias=True).to(X.device)
+    nn.init.zeros_(probe.weight); nn.init.zeros_(probe.bias)
+    opt = torch.optim.LBFGS(probe.parameters(), lr=1.0, max_iter=200,
+                            line_search_fn="strong_wolfe")
+    loss_fn = nn.BCEWithLogitsLoss(); yf = y.float().unsqueeze(1)
+    def closure():
+        opt.zero_grad()
+        l = loss_fn(probe(X), yf) + 0.5 * weight_decay * probe.weight.pow(2).sum() / len(X)
+        l.backward(); return l
+    opt.step(closure); return probe
+
 def train_probes(X_norm, y):
     n_layers = X_norm.shape[1]
-    y_np = y.numpy()
     accuracies, aucs = [], []
 
     for layer in range(n_layers):
-        X_layer = X_norm[:, layer, :].numpy()   # [N, 4096]
-
-        clf = LogisticRegression(max_iter=1000, C=1.0, solver='lbfgs')
-        cv  = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-        acc = cross_val_score(clf, X_layer, y_np, cv=cv, scoring='accuracy').mean()
-        auc = cross_val_score(clf, X_layer, y_np, cv=cv, scoring='roc_auc').mean()
-
-        accuracies.append(acc)
-        aucs.append(auc)
+        X_layer = X_norm[:, layer, :]                  # [N, 4096] torch tensor
+        folds = stratified_kfold_indices(y, n_splits=5, seed=42)
+        accs, auc_vals = [], []
+        for k in range(5):
+            te = folds[k]
+            tr = torch.cat([folds[j] for j in range(5) if j != k])
+            probe = fit_lr_probe(X_layer[tr], y[tr], weight_decay=1.0)
+            with torch.no_grad():
+                logits = probe(X_layer[te]).squeeze(1)
+            pred = (logits > 0).long()
+            accs.append((pred == y[te]).float().mean().item())
+            auc_vals.append(roc_auc(y[te], logits))
+        acc = sum(accs) / 5; auc = sum(auc_vals) / 5
+        accuracies.append(acc); aucs.append(auc)
         print(f"Layer {layer:2d}: acc={acc:.3f}  AUC={auc:.3f}")
 
     return accuracies, aucs
@@ -1202,6 +1299,27 @@ def plot_crystallisation(accuracies, aucs):
       <strong>15/20</strong> · src-arxiv-2505.23556 · Yeo, Prakash, Neo, Lee, Cambria, Satapathy · May 2025 (EMNLP 2025 Findings) · <em>Understanding Refusal in LMs with Sparse Autoencoders</em> · SAE features causally mediate refusal; refusal features improve OOD generalisation of downstream linear probes; feature steering improves jailbreak robustness but degrades general capability — Ch 2 methodology contrast + Ch 5 entanglement caveat · <a href="https://arxiv.org/abs/2505.23556" target="_blank">arXiv:2505.23556</a> · <a href="https://aclanthology.org/2025.findings-emnlp.338/" target="_blank">ACL</a><br>
       <strong>15/20</strong> · src-arxiv-2507.09709 · Saglam et al. (Yale + Foundation AI / Cisco) · Jul 2025 (IJCNLP 2025) · <em>LLMs Encode Semantics and Alignment in Linearly Separable Representations</em> · 11 LLMs: high-level semantics live in low-dim subspaces; <strong>linear separability becomes more pronounced in deeper layers</strong> — general-prior for the RQ1 crystallisation shape; final-layer MLP probe used as a latent guardrail · <a href="https://arxiv.org/abs/2507.09709" target="_blank">arXiv:2507.09709</a> · <a href="https://aclanthology.org/2025.ijcnlp-long.124/" target="_blank">ACL</a>
     </p>
+
+    <h2>Iteration #49 — 2026-06-20 (Mode A · 2 accepts on late-MLP-causal-construction + string-match-classifier-brittleness · Gap 47.B + Gap 47.E closure)</h2>
+    <p style="line-height:1.9">
+      <strong>17/20</strong> · src-zenodo-18907546 · anonymous Zenodo deposit · Mar 8 2026 · <em>Refusal Geometry in LLMs: A Universal Property of Late MLP Layers</em> · substrate-EXACT <strong>Llama 3.1 8B</strong> + cross-family <strong>Mistral 7B v0.3 + Gemma 2 9B</strong>; refusal geometry consistently peaks in the <strong>last 10% of transformer layers</strong> across all three architectures; <strong>MLP layers 21–29 causally construct the refusal subspace</strong> on Llama 3.1 8B (ablation delta = <strong>−0.396</strong>); the <strong>refusal subspace and the hallucination subspace are nearly orthogonal</strong> — first peer-style claim of geometric decoupling between two safety-relevant axes on substrate-exact Llama-3.1-8B; methodology is causal-trace + ablation-delta rather than gradient-trained linear probes — directly resolves <strong>Gap 47.B</strong> (substrate-exact saturation-vs-peak-vs-deployment reconciliation framework) with a four-operationalisation late-stack progression: <em>probe-saturation L3–L8 (W1, CircuitProbe) → direction-peak L11 (Universal Refusal Direction) → deployment-readiness L14–L20 (SafeSwitch) → causal-construction L21–L29 (this entry)</em>; furnishes Ch 5 three-axis decoupling defence (decisions-needed #14) on the refusal ⊥ hallucination axis; methodological hedge for the predicted-early-saturation vs. cited-late-construction tension via <em>information-propagation-forward-of-late-stack-causal-writes</em> framing · 🪞 deep-read needed (Trigger B; first Mode-A Trigger-B fire since iter #37) · <a href="https://zenodo.org/records/18907546" target="_blank">Zenodo:18907546</a><br>
+      <strong>16/20</strong> · src-arxiv-2509.24384 · anonymous · Sep 29 2025 · <em>HarmMetric Eval: Benchmarking Metrics and Judges for LLM Harmfulness Assessment</em> · 238-prompt benchmark with 2 high-quality + 4 diverse harmful reference responses + 8 non-harmful responses categorised by reasons (safe / irrelevant / useless); three essential-criteria axes (unsafe + relevant + useful) for the harmful-response label; classifier-spectrum coverage from simple string-matching binary classification through sophisticated numerical scoring by LLM-based judges; <strong>string-matching metrics perform poorly on irrelevant and useless responses</strong>, which typically lack explicit refusal strings; <strong>Llama-3.1-8B-Instruct's polite declinations fall outside the 22-phrase canonical refusal-prefix list</strong>, illustrating how tokenization variants and prefix variations lead to false negatives — directly resolves <strong>Gap 47.E</strong> (Unicode smart-quote refusal-prefix-classifier brittleness peer-cited support for the W1 19% misclassification observation); Ch 3 §3.2.3 generate-then-filter + label-noise defence enrichment (string-match-vs-LLM-judge classifier-disagreement axis adds to Larsen single-shot-T=0 variance axis); Ch 5 Limitations three-paper consensus (Larsen + Coin Flip + this entry) on refusal-classifier label-noise as a load-bearing validity concern · <a href="https://arxiv.org/abs/2509.24384" target="_blank">arXiv:2509.24384</a>
+    </p>
+
+    <div class="callout">
+      <div class="callout-title">🎯 Substrate-exact RQ1 four-operationalisation late-stack progression on Llama-3.1-8B — Gap 47.B closure</div>
+      <p>Iter #47 raised <strong>Gap 47.B</strong> — the most load-bearing gap of the W1-vs-corpus alignment audit — asking for a substrate-exact reconciliation framework that explains why probe-saturation localises 4–12 layers earlier than direction-peaks / deployment-bands on Llama-3.1-8B-Instruct. Iter #49's <strong>Zenodo Refusal Geometry (18907546)</strong> closes the gap on the citation-completeness axis with a four-operationalisation late-stack progression: <em>probe-saturation</em> (W1 L7–L8 + iter-#46 CircuitProbe L3–L8 stability-zone) localises <strong>information accessibility</strong> in the early-stack stability circuit; <em>direction-peak amplitude</em> (Universal Refusal Direction L11) localises <strong>direction-magnitude</strong> in the mid-stack; <em>deployment-readiness</em> (SafeSwitch L14–L20) localises <strong>production-decision-routing</strong> in the late-mid-stack; <em>causal-construction</em> (this iter's Zenodo L21–L29 MLP write, ablation delta −0.396) localises <strong>MLP-write-where-the-subspace-is-built</strong> in the late-stack. The Ch 5 Discussion methodological hedge writes: <em>the probe sees the information once it crosses the early-stack stability circuit (L3–L8), but the causal-write that constructs the underlying subspace happens late-stack (L21–L29); the information available to the probe at L8 is the propagation-forward of late-stack causal writes — a temporal-vs-spatial paradox of probe vs. causal-trace localisation.</em> The RQ1 layer-curve sextet (Maskey L1-onset + DbT L1-dip + DbT mid-stack peak + DbT extreme-layer dip + DbT plateau-stability + CircuitProbe L3–L8 stability) extends to a <strong>septet</strong> with the causal-construction L21–L29 element. Cross-family replication on Mistral 7B + Gemma 2 9B strengthens the Ch 5 architectural-property-vs-substrate-specificity discussion.</p>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">⊥ Three-axis decoupling defence — refusal ⊥ hallucination on substrate-exact Llama-3.1-8B (decisions-needed #14 anchor)</div>
+      <p>Decisions-needed #14 asks for substrate-exact peer-cited support for the thesis's three-axis decoupling (refusal ⊥ harmfulness ⊥ over-refusal). The Zenodo Refusal Geometry entry adds a <strong>third orthogonality axis</strong>: <em>refusal subspace ⊥ hallucination subspace</em> on Llama 3.1 8B + Mistral 7B + Gemma 2 9B. Combined with iter-#37 DSH Reflex-to-Dissociation (refusal trajectory decouples from harmfulness response) and iter-#43 Maskey et al. (harmful-refusal task-agnostic single-direction vs over-refusal task-conditioned higher-dimensional subspace), the corpus now has <strong>three distinct geometric-orthogonality claims on Llama-3.1-8B-family substrates</strong>. The Ch 5 three-axis decoupling argument is no longer thesis-internal-prediction but a peer-cited triple-anchored framing.</p>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">🔍 Refusal-classifier string-match brittleness — Gap 47.E closure + W1 smart-quote misclassification literature-anchoring</div>
+      <p>Florian's W1 finding (19% of HarmBench refusals silently misclassified due to Unicode smart-quote variants) is now embeddable in a peer-cited literature via <strong>HarmMetric Eval (2509.24384)</strong>, which finds explicitly that <em>Llama-3.1-8B-Instruct's polite declinations fall outside the 22-phrase canonical refusal-prefix list, illustrating how tokenization variants and prefix variations lead to false negatives</em>. The corpus now has a <strong>three-paper consensus</strong> on refusal-classifier label-noise as a load-bearing Ch 5 Limitations concern: <em>Larsen 2025 (src-arxiv-2512.12066)</em> — single-shot T=0 + temperature decision-flip variance (~8% label-noise floor); <em>Coin Flip for Safety (src-arxiv-2603.06594)</em> — LLM-judges fail to reliably measure adversarial robustness; <em>HarmMetric Eval (this iter)</em> — string-match-vs-LLM-judge classifier-disagreement axis with substrate-cited polite-declination floor. The thesis's Ch 3 §3.2.3 generate-then-filter defence and Ch 5 Limitations smart-quote-brittleness paragraph now anchor on three independent peer-cited brittleness axes rather than a W1-internal observation.</p>
+    </div>
 
     <h2>Iteration #46 — 2026-06-19 (Mode A · 2 accepts on category-conditioned-refusal-directions + activation-statistics-stability-zone-layer-localisation)</h2>
     <p style="line-height:1.9">
