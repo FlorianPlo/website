@@ -276,7 +276,7 @@ MathJax = {
     <a class="nav-sub" href="#residual-stream">Residual Stream</a>
     <a class="nav-sub" href="#attention">Attention Mechanism</a>
     <a class="nav-sub" href="#mlp">MLP Layers</a>
-    <a class="nav-sub" href="#llama-specifics">Llama-3-8B Specifics</a>
+    <a class="nav-sub" href="#llama-specifics">Llama-3.1-8B Specifics</a>
     <a class="nav-link" href="#generation">How LLMs Generate Text</a>
     <a class="nav-link" href="#safety-training">Safety Training</a>
     <a class="nav-sub" href="#rlhf">RLHF</a>
@@ -319,7 +319,7 @@ MathJax = {
 
   <!-- HERO -->
   <div class="hero">
-    <div class="badge">Bachelor Thesis · Llama-3-8B</div>
+    <div class="badge">Bachelor Thesis · Llama-3.1-8B-Instruct</div>
     <h1>LLM Refusal Interpretability<br>Deep Knowledge Guide</h1>
     <p>Everything you need to understand — from how transformers work at the weight level to how refusal crystallises across layers and why jailbreaks sometimes bypass it.</p>
   </div>
@@ -363,11 +363,34 @@ MathJax = {
       <p>Constant-score Mann-Whitney tie-breaking produced AUC = 1.0 instead of 0.5. Short-circuit to 0.5 when score std &lt; 1e-9. Affects only the L0 cell in Fig 3.</p>
     </div>
 
+    <h2 id="why-earlier">Why our crystallisation layer is earlier than published numbers</h2>
+    <p>The W1 saturation (L7) sits 4–13 layers <em>earlier</em> than every published layer-number on Llama-3 / 3.1. The discrepancy is <strong>methodological</strong>, not empirical:</p>
+    <table>
+      <tr><th>Paper</th><th>Layer</th><th>Criterion</th></tr>
+      <tr><td>Arditi 2024</td><td>~L12 (Llama-3)</td><td>Causal-ablation peak</td></tr>
+      <tr><td>Zhao Jiachen 2025</td><td>L11 (Llama-3)</td><td>Cosine-similarity peak on 1D mean-diff</td></tr>
+      <tr><td>Universal Refusal Direction 2025</td><td>L11 (Llama-3.1)</td><td>Cross-lingual generalisation of 1D direction</td></tr>
+      <tr><td>SafeSwitch 2025</td><td>L14–20 (Llama-3.1)</td><td>MLP-prober deployment band (utility × safety)</td></tr>
+      <tr><td><strong>This thesis (W1)</strong></td><td><strong>L4–L7 (Llama-3.1)</strong></td><td><strong>Full-LR linear probe accuracy</strong></td></tr>
+    </table>
+    <p>A linear probe answers <em>"is the information present and linearly readable?"</em>. Causal ablation answers <em>"is removing this direction what changes the output?"</em>. These come apart cleanly: by L4–L7 attention has shuffled the relevant token features into the residual stream and they are <em>readable</em>, but the model has not yet <em>committed</em> to the refusal action — that consolidation is what Arditi's L12 ablation peak measures. Both findings are simultaneously true; this is the Belinkov (2022) decodable-vs-causal distinction.</p>
+
+    <h2 id="unembedding-constraint">Unembedding contamination at late layers — addressed</h2>
+    <div class="callout">
+      <div class="callout-title">📐 Why we constrain crystallisation claims to ℓ ≤ 25</div>
+      <p>At late layers, the residual stream is geometrically close to the unembedding matrix. A linear direction at ℓ near L=32 can correspond to a <em>specific next-output token</em> ("I", "As", "Sorry") rather than to a high-level refusal feature. Arditi (2024) explicitly excludes layers ℓ ≥ 0.8L from their direction selection. We adopt the same constraint when reporting crystallisation layers, for the parallel reason: a probe at ℓ &gt; 25 may be reading "the model is about to emit a refusal token" rather than "the model has decided to refuse". Our saturation layer L7 sits 18 layers below this boundary — well inside the valid window — so the headline claim is robust. The L26–L31 plateau is reported descriptively but excluded from causal-interpretation claims.</p>
+      <p><strong>Asymmetry across positions:</strong> the concern hits <code>t_post-inst</code> harder than <code>t_inst</code>, because <code>t_post-inst</code> is literally the position from which the assistant's first output token is sampled. The position-effect gap (t_post 1.00 vs t_inst 0.96) at late layers is partially unembedding leakage; the gap inside ℓ ≤ 25 is the real RQ2 finding.</p>
+    </div>
+
+    <h2 id="stack-choice">Why HuggingFace transformers, not TransformerLens</h2>
+    <p>Arditi, Wollschläger, and Frank use TransformerLens for its hook API (activation patching, direction ablation). Our probing design is <strong>observational</strong> — the probe reads the residual stream and produces an accuracy estimate; no causal intervention. The hook API is therefore not load-bearing. HuggingFace <code class="inline">transformers</code> gives us native Llama-3.1 support, ~5 GB lower VRAM (critical on Kaggle T4's 16 GB ceiling), and <code class="inline">hidden_states[ℓ]</code> is bit-identical to TransformerLens's <code class="inline">blocks.{ℓ}.hook_resid_pre</code> — so cross-version cosine comparisons against Arditi's published <code>direction.pt</code> are layer-aligned by construction. Causal ablation of the discovered probe direction is deferred to Master's-level future work in Ch 6.</p>
+
     <h2 id="open-questions">Open questions for the supervisor</h2>
     <p style="line-height:1.8">
       1. Is the position-effect framing of RQ2 (vs the full Zhao Jiachen dissociation) defensible at bachelor's scope, or should the W6 stretch be pulled into W2?<br>
       2. Report cosine vs Arditi's published <code>direction.pt</code> as a Ch 4 robustness subsection or as a Discussion-only sanity check?<br>
-      3. Is N = 140 + 140 with bootstrap CIs sufficient for the headline 1.00-saturation claim, or do we need to push to N = 200 + 200 via larger Alpaca pool + relaxed length-match?
+      3. Is N = 140 + 140 with bootstrap CIs sufficient for the headline 1.00-saturation claim, or do we need to push to N = 200 + 200 via larger Alpaca pool + relaxed length-match?<br>
+      4. The crystallisation layer (L7) sits 4–13 layers earlier than every comparable paper — is the methodological framing (probing ≠ ablation, Belinkov 2022) sufficient for Ch 5, or does the abstract need to lead with the discrepancy itself as the headline contribution?
     </p>
   </section>
 
@@ -416,7 +439,7 @@ Each token → embedding → vector h ∈ ℝ^4096
     </div>
 
     <h3>What lives in the residual stream?</h3>
-    <p>Think of the residual stream as a high-dimensional blackboard (4096 dimensions for Llama-3-8B). Different "features" are written to different dimensions or directions. The <strong>linear representation hypothesis</strong> (Elhage et al. 2022) states that neural networks tend to encode concepts as linear directions in this space. This means:</p>
+    <p>Think of the residual stream as a high-dimensional blackboard (4096 dimensions for Llama-3.1-8B; identical to Llama-3-8B since the architecture didn't change between the two releases). Different "features" are written to different dimensions or directions. The <strong>linear representation hypothesis</strong> (Elhage et al. 2022) states that neural networks tend to encode concepts as linear directions in this space. This means:</p>
     <ul style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
       <li style="margin-bottom:8px;">"This is a harmful request" might be encoded as a specific direction $\mathbf{v} \in \mathbb{R}^{4096}$</li>
       <li style="margin-bottom:8px;">The model "writes" to this direction by adding a component along $\mathbf{v}$ to the stream</li>
@@ -444,7 +467,7 @@ Each token → embedding → vector h ∈ ℝ^4096
     <p>Different heads specialise. In safety-trained models, some heads have been identified as "refusal heads" — their output strongly projects onto the refusal direction in the residual stream.</p>
 
     <h3>Multi-head attention</h3>
-    <p>Llama-3-8B has <strong>32 attention heads</strong> per layer, each with $d_\text{head} = 128$ dimensions. They run in parallel and are concatenated:</p>
+    <p>Llama-3.1-8B has <strong>32 attention heads</strong> per layer, each with $d_\text{head} = 128$ dimensions. They run in parallel and are concatenated:</p>
 
     <div class="math">
       $$\begin{aligned}
@@ -456,7 +479,7 @@ Each token → embedding → vector h ∈ ℝ^4096
 
     <div class="callout warn">
       <div class="callout-title">Gotcha with TransformerLens</div>
-      <p>Llama-3-8B uses <strong>Grouped Query Attention (GQA)</strong>: 32 query heads but only 8 key/value heads. Every 4 query heads share one KV head. This is an efficiency trick but does not affect residual stream probing — <code class="inline">hook_resid_post</code> always gives you the full 4096-dim stream regardless.</p>
+      <p>Llama-3.1-8B uses <strong>Grouped Query Attention (GQA)</strong>: 32 query heads but only 8 key/value heads. Every 4 query heads share one KV head. This is an efficiency trick but does not affect residual stream probing — indexing <code class="inline">hidden_states[ℓ]</code> always gives you the full 4096-dim residual at the input to block ℓ regardless (equivalent to TransformerLens's <code class="inline">blocks.{ℓ}.hook_resid_pre</code>).</p>
     </div>
 
     <h2 id="mlp">MLP Layers</h2>
@@ -474,7 +497,7 @@ Each token → embedding → vector h ∈ ℝ^4096
     <h3>Why MLPs matter for refusal</h3>
     <p>MLPs can both <em>write</em> refusal features to the stream and <em>suppress</em> other features. When a refusal-relevant MLP neuron fires, it adds its stored direction (a row of $W_\text{down}$) to the residual stream. This is how the refusal direction accumulates across layers — it is written incrementally by specific MLP neurons.</p>
 
-    <h2 id="llama-specifics">Llama-3-8B Architecture Details</h2>
+    <h2 id="llama-specifics">Llama-3.1-8B Architecture Details</h2>
 
     <table>
       <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
@@ -554,7 +577,7 @@ Final output: "I can't help with that."</div>
   <section class="section" id="safety-training">
     <div class="section-label">Section 03</div>
     <h1>Safety Training</h1>
-    <p>Llama-3-8B-Instruct was trained in stages. Understanding which stage produces refusal behaviour is important for knowing what you are studying.</p>
+    <p>Llama-3.1-8B-Instruct was trained in stages. Understanding which stage produces refusal behaviour is important for knowing what you are studying.</p>
 
     <h2>Training pipeline overview</h2>
 
@@ -831,99 +854,96 @@ def probe_accuracy(X, y, weight_decay=1.0):
 
     <h3>Step 1: Environment setup</h3>
 
-<pre><code class="language-bash">pip install transformer_lens torch scikit-learn matplotlib
-# Llama-3-8B requires approval at huggingface.co/meta-llama
+<pre><code class="language-bash">pip install -U transformers datasets torch matplotlib
+# Llama-3.1-8B requires approval at huggingface.co/meta-llama
 huggingface-cli login</code></pre>
 
     <h3>Step 2: Load the model</h3>
+    <p>The thesis uses HuggingFace <code class="inline">transformers</code> directly (not TransformerLens). TL would add ~5 GB extra VRAM for the rebuilt HookedTransformer and requires custom configuration for Llama-3.1, where HF has native support. The probe is observational (no causal interventions), so the TL hook system is not needed.</p>
 
 <pre><code class="language-python">import torch
-from transformer_lens import HookedTransformer
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # bfloat16 is essential — float32 requires 32 GB VRAM
-model = HookedTransformer.from_pretrained(
-    "meta-llama/Meta-Llama-3-8B-Instruct",
-    dtype=torch.bfloat16,
-    device="cuda"
+MODEL_ID = "meta-llama/Llama-3.1-8B-Instruct"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    torch_dtype=torch.bfloat16,
+    device_map="auto",
+    output_hidden_states=True,
 )
 model.eval()
 
-print(f"Layers:     {model.cfg.n_layers}")   # 32
-print(f"d_model:    {model.cfg.d_model}")    # 4096
-print(f"Attn heads: {model.cfg.n_heads}")    # 32</code></pre>
+print(f"Layers:     {model.config.num_hidden_layers}")   # 32
+print(f"d_model:    {model.config.hidden_size}")         # 4096
+print(f"Attn heads: {model.config.num_attention_heads}") # 32</code></pre>
 
-    <h3>Step 3: Format prompts correctly</h3>
-    <p>Llama-3-Instruct expects a specific chat format. The wrong format gives you base-model behaviour, not the safety-trained model's.</p>
+    <h3>Step 3: Format prompts correctly — no system prompt</h3>
+    <p>Llama-3.1-Instruct expects a specific chat format. Calling <code class="inline">tokenizer.apply_chat_template</code> silently injects a default system header with date strings ("Cutting Knowledge Date: …\nToday Date: …") which mixes irrelevant variance into the residual stream. We format manually instead, matching Arditi et al. (2024) and Zhao Jiachen et al. (2025) exactly.</p>
 
-<pre><code class="language-python">def format_prompt(user_message: str) -> str:
-    """Format a single-turn user message in Llama-3 chat format."""
-    return (
-        "&lt;|begin_of_text|&gt;"
-        "&lt;|start_header_id|&gt;user&lt;|end_header_id|&gt;\n\n"
-        f"{user_message}"
-        "&lt;|eot_id|&gt;"
-        "&lt;|start_header_id|&gt;assistant&lt;|end_header_id|&gt;\n\n"
-    )</code></pre>
+<pre><code class="language-python">PROMPT_TEMPLATE = (
+    "&lt;|begin_of_text|&gt;"
+    "&lt;|start_header_id|&gt;user&lt;|end_header_id|&gt;\n\n"
+    "{instruction}&lt;|eot_id|&gt;"
+    "&lt;|start_header_id|&gt;assistant&lt;|end_header_id|&gt;\n\n"
+)
 
-    <h3>Step 4: Extract activations at all 32 layers</h3>
+def format_chat(instruction: str) -> torch.Tensor:
+    text = PROMPT_TEMPLATE.format(instruction=instruction)
+    return tokenizer(text, return_tensors="pt", add_special_tokens=False)["input_ids"][0]</code></pre>
 
-<pre><code class="language-python">import torch
-from typing import Dict, List
+    <h3>Step 4: Extract activations at all 32 layers, two token positions</h3>
+
+<pre><code class="language-python">TOK_EOT = 128009  # &lt;|eot_id|&gt;
+
+def resolve_positions(input_ids):
+    """t_inst = token before first &lt;|eot_id|&gt;; t_post = last input token."""
+    t_inst = (input_ids == TOK_EOT).nonzero(as_tuple=True)[0][0].item() - 1
+    t_post = input_ids.shape[0] - 1
+    return t_inst, t_post
 
 @torch.no_grad()
-def extract_all_layer_activations(
-    prompt: str,
-    model: HookedTransformer
-) -> Dict[int, torch.Tensor]:
-    """
-    Returns {layer: activation_vector} for all 32 layers.
-    Activation = residual stream at the last token position.
-    """
-    tokens = model.to_tokens(prompt)
-    _, cache = model.run_with_cache(tokens)
-
-    activations = {}
-    for layer in range(model.cfg.n_layers):
-        # hook_resid_post = residual stream AFTER attention + MLP at this layer
-        # shape: [batch=1, seq_len, d_model=4096]
-        h = cache[f"blocks.{layer}.hook_resid_post"]
-        activations[layer] = h[0, -1, :].cpu().float()  # last token, no batch dim
-
-    return activations  # 32 tensors, each shape [4096]
+def extract_two_positions(prompt: str):
+    """Returns two [32, 4096] activation tensors per prompt."""
+    ids = format_chat(prompt).unsqueeze(0).to(model.device)
+    t_inst, t_post = resolve_positions(ids[0])
+    out = model(ids, output_hidden_states=True)
+    # hidden_states is a tuple of length 33. [:32] aligns with TransformerLens
+    # blocks.{0..31}.hook_resid_pre (the input to each block).
+    h_inst = torch.stack([h[0, t_inst].float().cpu() for h in out.hidden_states[:32]])
+    h_post = torch.stack([h[0, t_post].float().cpu() for h in out.hidden_states[:32]])
+    return h_inst, h_post  # each [32, 4096]
 
 
-def build_activation_dataset(harmful_prompts, benign_prompts, model):
-    """Returns X [N, 32, 4096] and y labels (1=harmful, 0=benign)."""
-    all_acts, all_labels = [], []
-
-    for prompt in harmful_prompts:
-        acts = extract_all_layer_activations(format_prompt(prompt), model)
-        all_acts.append(acts)
-        all_labels.append(1)
-
-    for prompt in benign_prompts:
-        acts = extract_all_layer_activations(format_prompt(prompt), model)
-        all_acts.append(acts)
-        all_labels.append(0)
-
-    N = len(all_labels)
-    X = torch.zeros(N, 32, 4096)
-    for i, act_dict in enumerate(all_acts):
-        for layer, vec in act_dict.items():
-            X[i, layer] = vec
-
-    return X, torch.tensor(all_labels)</code></pre>
+def build_activation_dataset(harmful_prompts, benign_prompts):
+    """Returns X_inst, X_post [N, 32, 4096] and y labels (1=harmful, 0=benign)."""
+    X_inst, X_post, y = [], [], []
+    for p in harmful_prompts:
+        h_inst, h_post = extract_two_positions(p)
+        X_inst.append(h_inst); X_post.append(h_post); y.append(1)
+    for p in benign_prompts:
+        h_inst, h_post = extract_two_positions(p)
+        X_inst.append(h_inst); X_post.append(h_post); y.append(0)
+    return (torch.stack(X_inst).float(),
+            torch.stack(X_post).float(),
+            torch.tensor(y, dtype=torch.long))</code></pre>
 
     <h3>Step 5: Save activations — never recompute</h3>
 
-<pre><code class="language-python">X, y = build_activation_dataset(harmful_prompts, benign_prompts, model)
+<pre><code class="language-python">X_inst, X_post, y = build_activation_dataset(harmful_prompts, benign_prompts)
 
 # Save once. Each future session just loads this.
-torch.save({"X": X, "y": y}, "activations.pt")
+import numpy as np
+np.save("acts_inst.npy", X_inst.numpy())
+np.save("acts_post.npy", X_post.numpy())
+np.save("labels.npy",    y.numpy())
 
 # Disk usage estimate:
-# 500 prompts × 32 layers × 4096 dims × 2 bytes (float16) ≈ 1.3 GB
-data = torch.load("activations.pt")
+# 280 prompts × 32 layers × 4096 dims × 4 bytes (float32) ≈ 140 MB per position
+X_inst = torch.from_numpy(np.load("acts_inst.npy"))
+X_post = torch.from_numpy(np.load("acts_post.npy"))
+y      = torch.from_numpy(np.load("labels.npy"))
 X, y = data["X"], data["y"]</code></pre>
 
     <h3>Step 6: Normalise and train probes</h3>
@@ -1000,7 +1020,7 @@ def plot_crystallisation(accuracies, aucs):
     ax.axhline(0.5, color='gray', lw=1, linestyle=':', label='Chance')
     ax.axvline(cryst, color='#f87171', lw=2, linestyle='--',
                label=f'Crystallisation layer {cryst}')
-    ax.set(xlabel='Layer', ylabel='Performance', title='Refusal Crystallisation — Llama-3-8B')
+    ax.set(xlabel='Layer', ylabel='Performance', title='Refusal Crystallisation — Llama-3.1-8B')
     ax.legend(); ax.set_ylim(0.4, 1.05); ax.set_xticks(range(0, 32, 2))
     plt.tight_layout()
     plt.savefig("crystallisation_curve.pdf", dpi=150)
@@ -1017,7 +1037,7 @@ def plot_crystallisation(accuracies, aucs):
     <h1>Crystallisation — Theory</h1>
 
     <h2>What the probe accuracy curve looks like</h2>
-    <p>Based on SafeSwitch and related work, the expected shape for Llama-3-8B:</p>
+    <p>Based on SafeSwitch and related work, the expected shape for Llama-3.1-8B (originally; our W1 run finds the actual curve crystallises 5–7 layers earlier — see Current Work):</p>
 
     <div class="diagram">Probe Accuracy
     │
@@ -1097,7 +1117,7 @@ def plot_crystallisation(accuracies, aucs):
 
     <div class="callout warn">
       <div class="callout-title">Always check what the model actually does</div>
-      <p>Before labelling a prompt as "harmful," run Llama-3-8B-Instruct and verify it is refused. Your dataset labels must reflect actual model behaviour, not the dataset creator's intent.</p>
+      <p>Before labelling a prompt as "harmful," run Llama-3.1-8B-Instruct and verify it is refused. Your dataset labels must reflect actual model behaviour, not the dataset creator's intent. Use <strong>smart-quote-aware</strong> prefix matching — Llama-3.1 emits curly U+2019 apostrophes (e.g. <em>"I can't…"</em>) in ~19% of refusal phrasings, which a straight-quote-only classifier silently misses (see Current Work § artefacts).</p>
     </div>
 
 <pre><code class="language-python">def check_refusal(prompt: str, model, tokenizer) -> bool:
