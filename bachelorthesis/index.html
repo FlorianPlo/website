@@ -1153,7 +1153,7 @@ def plot_crystallisation(accuracies, aucs):
     <h1>Key Papers — What to Know</h1>
 
     <div class="callout paper">
-      <div class="callout-title">1 · Arditi et al. — Refusal in LLMs is Mediated by a Single Direction (NeurIPS 2024)</div>
+      <div class="callout-title">1 · Arditi et al. — Refusal in Language Models is Mediated by a Single Direction (NeurIPS 2024)</div>
       <p><strong>Core claim:</strong> A single linear direction $\hat{r}$ in the residual stream mediates refusal across models and layers.</p>
       <p><strong>Method:</strong> Mean-difference direction $\hat{r}^l$ + ablation ($h \leftarrow h - (h \cdot \hat{r})\hat{r}$) + injection ($h \leftarrow h + \alpha\hat{r}$).</p>
       <p><strong>Key numbers:</strong> Ablating the direction → ~92% attack success rate on Llama-2-7B-Chat (vs. ~3% baseline). Injection → ~90% of benign prompts are refused.</p>
@@ -1237,7 +1237,7 @@ def plot_crystallisation(accuracies, aucs):
     <h2>Iteration #1 — Seed reading (2026-06-12)</h2>
 
     <p style="line-height:1.9">
-      <strong>20/20</strong> · <a href="#" onclick="return false">src-arditi-2024</a> · Arditi et al., NeurIPS 2024 · <em>Refusal in LLMs is Mediated by a Single Direction</em> · foundational, 1D baseline source · <a href="https://arxiv.org/abs/2406.11717" target="_blank">arXiv:2406.11717</a><br>
+      <strong>20/20</strong> · <a href="#" onclick="return false">src-arditi-2024</a> · Arditi et al., NeurIPS 2024 · <em>Refusal in Language Models is Mediated by a Single Direction</em> · foundational, 1D baseline source · <a href="https://arxiv.org/abs/2406.11717" target="_blank">arXiv:2406.11717</a><br>
       <strong>20/20</strong> · src-arxiv-2502.01042 · Han et al. 2025 · <em>SafeSwitch: Steering Unsafe LLM Behavior via Internal Activation Signals</em> · closest layer-finding precedent, probers read the deep/last layers (the paper reports no specific numbered band; an earlier '14–20' figure was unsupported) · <a href="https://arxiv.org/abs/2502.01042" target="_blank">arXiv:2502.01042</a><br>
       <strong>20/20</strong> · src-wollschlager-2025 · Wollschlager et al., ICML 2025 · <em>Geometry of Refusal</em> · multi-dim subspace (RQ3 target)<br>
       <strong>20/20</strong> · src-arxiv-2510.06036 · Yin et al., Oct 2025 · <em>Refusal Falls off a Cliff</em> · RQ2-adjacent (reasoning models) · <a href="https://arxiv.org/abs/2510.06036" target="_blank">arXiv:2510.06036</a><br>
