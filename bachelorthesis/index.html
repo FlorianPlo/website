@@ -1300,7 +1300,7 @@ def plot_crystallisation(accuracies, aucs):
     <p style="line-height:1.9">
       <strong>18/20</strong> · src-arxiv-2603.27518 · Mar 2026 · <em>Over-Refusal and Representation Subspaces</em> · linear probing across layers distinguishes harmful-refusal (single direction) from over-refusal (higher-D subspace) — methodology parallel · ⚠ decisions-needed #4 · <a href="https://arxiv.org/abs/2603.27518" target="_blank">arXiv:2603.27518</a><br>
       <strong>18/20</strong> · src-arxiv-2603.13359 · Mar 2026 · <em>From Refusal Tokens to Refusal Control</em> · Llama-3-8B residual stream, linear probes, category-specific refusal directions — exact model+method match · ⚠ decisions-needed #6 · <a href="https://arxiv.org/abs/2603.13359" target="_blank">arXiv:2603.13359</a><br>
-      <strong>16/20</strong> · src-arxiv-2603.04355 · Nanfack, Belilovsky, Dohmatob · Mar 2026 · <em>Efficient Refusal Ablation via Optimal Transport</em> · sharp layer transition in Llama (34%→82% ASR at layers 11–17) — RQ1 comparison point · ⚠ decisions-needed #5 · <a href="https://arxiv.org/abs/2603.04355" target="_blank">arXiv:2603.04355</a><br>
+      <strong>16/20</strong> · src-arxiv-2603.04355 · Nanfack, Belilovsky, Dohmatob · Mar 2026 · <em>Efficient Refusal Ablation via Optimal Transport</em> · refusal localised to 1–2 layers at ≈40–60% depth (six models, 7B–32B) — RQ1 comparison point · ⚠ decisions-needed #5 · <a href="https://arxiv.org/abs/2603.04355" target="_blank">arXiv:2603.04355</a><br>
       <strong>15/20</strong> · src-arxiv-2604.07835 · Apr 2026 · <em>Silencing the Guardrails (CRA)</em> · inference-time jailbreak via low-rank refusal subspace ablation — RQ3 subspace evidence + RQ4 jailbreak · <a href="https://arxiv.org/abs/2604.07835" target="_blank">arXiv:2604.07835</a><br>
       <strong>12/20</strong> · src-arxiv-2507.02956 · Bullwinkel et al. (Microsoft) · Jul 2025 · <em>RepE Perspective on Multi-Turn Jailbreaks</em> · Crescendo jailbreaks shift representations to benign region — RQ4 future-work · <a href="https://arxiv.org/abs/2507.02956" target="_blank">arXiv:2507.02956</a>
     </p>
@@ -1601,7 +1601,7 @@ def plot_crystallisation(accuracies, aucs):
         • <strong>deep/last layers</strong> — SafeSwitch (<code>src-arxiv-2502.01042</code>): prober-read band across the 8B-family (the paper reports no specific numbered band; an earlier '14–20' figure was unsupported).<br>
         • <strong>L15–16</strong> — Frank (<code>src-arxiv-2604.04385</code>): detection signal forms here, feeds gate at L17.<br>
         • <strong>L16</strong> — ReFAT ICLR 2025 (<code>src-arxiv-2409.20089</code>): refusal feature on 16th-layer residual stream of Llama-3-8B-Instruct; Rogue Scalpel (<code>src-arxiv-2509.22067</code>): steering peak compliance at L16 on Llama-3.1-8B.<br>
-        • <strong>L17</strong> — Frank (<code>src-arxiv-2604.04385</code>): causal gate attention head L17.H17; OT-ablation (<code>src-arxiv-2603.04355</code>): sharp ASR transition L11→L17 (Llama-2-13B, ~35–45% depth).
+        • <strong>L17</strong> — Frank (<code>src-arxiv-2604.04385</code>): causal gate attention head L17.H17; OT-ablation (<code>src-arxiv-2603.04355</code>): refusal localised to 1–2 layers at ≈40–60% depth [the specific "L11→L17, Llama-2-13B" figures are ⚠ unverified — PDF-body-pending, uncorroborated by abstract/WebSearch].
       </p>
       <p>The <strong>L11 anchor is now cited by three independent methods</strong> (correlational direction-extraction in Zhao + multilingual refusal direction + causal ablation in SOM) on the Llama-3(.1)-8B-Instruct family. The <strong>L16–17 anchor is causally attested</strong> (Frank gate + ReFAT residual). RQ1's predicted crystallisation curve at <em>t<sub>post-inst</sub></em> should land between L11 and L17, with the harmfulness signal at <em>t<sub>inst</sub></em> two layers earlier (Zhao's L9–L11 differential). <strong>The Ch 4 Discussion table is this list</strong> — the thesis's own per-layer probe accuracy curve becomes the 10th convergent reference.</p>
     </div>
@@ -1717,7 +1717,7 @@ def plot_crystallisation(accuracies, aucs):
       Independent layer reference points for the Llama-8B family clustering in the <strong>11–20 band</strong>:<br>
       • SafeSwitch (2502.01042): probers read the <strong>deep/last layers</strong> (Llama-3.1-8B plus Qwen2.5, Yi-1.5, Ministral; the paper reports no specific numbered band, an earlier '14–20' figure was unsupported).<br>
       • Universal Refusal Direction (2505.17306): refusal direction at <strong>layer 11, token −1</strong> (Llama-3.1-8B-Instruct).<br>
-      • OT Refusal Ablation (2603.04355): sharp ASR transition <strong>layer 11 → 17</strong> (Llama-2-13B, ~35–45% depth).<br>
+      • OT Refusal Ablation (2603.04355): refusal localised to <strong>1–2 layers at ≈40–60% depth</strong> (six models, 7B–32B); the specific "layer 11→17, Llama-2-13B, 34%→82% ASR" figures are ⚠ unverified (PDF-body-pending, uncorroborated by abstract/WebSearch).<br>
       • Rogue Scalpel (2509.22067): steering peak compliance at <strong>layer 16</strong> (Llama-3.1-8B).<br>
       • LessWrong (Mar 2026): best refusal vector at <strong>layer 15</strong> (Qwen-1.8B-Chat).<br>
       Prediction for the thesis's Llama-3-8B-Instruct crystallisation curve: inflection in the 11–17 band. Deviation outside that band = a finding.
